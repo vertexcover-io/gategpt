@@ -1,0 +1,41 @@
+[project]
+name = "custom-gpts-paywall"
+version = "0.1.0"
+description = "Add your description here"
+authors = [{ name = "Ritesh Kadmawala", email = "ritesh@vertexcover.io" }]
+dependencies = [
+    "ruff>=0.1.5",
+    "typer>=0.9.0",
+    "fastapi>=0.104.1",
+    "sqlalchemy>=2.0.23",
+    "alembic>=1.12.1",
+    "pydantic[email]>=2.5.1",
+    "python-dotenv>=1.0.0",
+    "cached_property>=1.5.2",
+    "shortuuid>=1.0.11",
+    "psycopg2>=2.9.9",
+    "uvicorn[standard]>=0.24.0.post1",
+    "requests>=2.31.0",
+    "boto3>=1.29.3",
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = [
+    "ipython>=8.12.3",
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.rye.scripts]
+dev = "uvicorn src.custom_gpts_paywall.api:app --reload --host 0.0.0.0 --port 8000"
+downgrade = "rye run alembic downgrade"
+upgrade = "rye run alembic upgrade"
+revision = "rye run alembic revision --autogenerate"
