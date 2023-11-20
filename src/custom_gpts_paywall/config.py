@@ -16,7 +16,6 @@ DEFAULT_EMAIL_FROM = "ritesh@vertexcover.io"
 
 class EnvConfig(BaseModel):
     db_url: str
-    secret_key: str
     port: int = Field(default=8000)
     sendx_api_key: Optional[str]
     min_delay_between_verification: timedelta
@@ -39,7 +38,6 @@ def create_config() -> ConfigDict:
     load_dotenv()
     return EnvConfig(
         db_url=os.getenv("DATABASE_URL"),
-        secret_key=os.getenv("SECRET_KEY"),
         port=os.getenv("PORT", 8000),
         sendx_api_key=os.getenv("SENDX_API_KEY"),
         min_delay_between_verification=os.getenv(
