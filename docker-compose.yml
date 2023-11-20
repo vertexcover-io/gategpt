@@ -7,7 +7,7 @@ services:
       context: .
     container_name: custom-gpts-paywall
     ports:
-      - "8000:80"  # Map port 8000 on your host to port 80 in the container
+      - "8000:8000"  # Map port 8000 on your host to port 80 in the container
     depends_on:
       - postgres  # Ensure that the PostgreSQL service starts first
     env_file:

@@ -3,6 +3,8 @@ from pydantic import BaseModel, Field, EmailStr
 from typing import Annotated
 from fastapi import FastAPI, Depends, BackgroundTasks, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.openapi.models import Server
+
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from custom_gpts_paywall.config import (
     create_config,
@@ -16,7 +18,29 @@ from datetime import timedelta
 import random
 from custom_gpts_paywall.utils import utcnow
 
-app = FastAPI()
+
+prod_server = Server(
+    url="https://custom-gpts-verifier.vertexcover.io",
+    description="Production server",
+)
+dev_server = Server(
+    url="http://localhost:8000",
+    description="Development server",
+)
+
+app = FastAPI(
+    servers=[prod_server.model_dump(), dev_server.model_dump()],
+    tags=[
+        {
+            "name": "admin",
+            "description": "Admin API",
+        },
+        {
+            "name": "openai",
+            "description": "OpenAI Actions API",
+        },
+    ],
+)
 
 
 class UserCreateRequest(BaseModel):
@@ -71,13 +95,14 @@ def api_key_auth(
 UserDep = Annotated[User, Depends(api_key_auth)]
 
 
-@app.get("/healthcheck")
+@app.get("/healthcheck", tags=["private"])
 def healthcheck(config: ConfigDep):
     return {"status": "ok"}
 
 
 @app.post(
     "/api/v1/user",
+    tags=["admin"],
     status_code=201,
     response_model=UserCreateResponse,
 )
@@ -107,6 +132,7 @@ class CreateVerificationRequest(BaseModel):
 
 @app.post(
     "/api/v1/verification-request",
+    tags=["openai"],
     status_code=202,
     response_model=JSONMessageResponse,
 )
@@ -159,10 +185,8 @@ def create_verification_request(
         email=create_verification_request.email,
         otp=otp,
     )
-
-    return {
-        "message": f"OTP {otp} has been sent to user's {user.verification_medium.value}"
-    }
+    print(f"OTP {otp} has been sent to user's {user.verification_medium.value}")
+    return {"message": f"OTP has been sent to user's {user.verification_medium.value}"}
 
 
 class VerifyOTPRequest(BaseModel):
@@ -174,6 +198,7 @@ class VerifyOTPRequest(BaseModel):
     "/api/v1/verify",
     status_code=200,
     response_model=JSONMessageResponse,
+    tags=["openai"],
 )
 def verify_otp(
     verify_request: VerifyOTPRequest,
