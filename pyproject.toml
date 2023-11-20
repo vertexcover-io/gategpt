@@ -11,7 +11,6 @@ dependencies = [
     "alembic>=1.12.1",
     "pydantic[email]>=2.5.1",
     "python-dotenv>=1.0.0",
-    "cached_property>=1.5.2",
     "shortuuid>=1.0.11",
     "psycopg2>=2.9.9",
     "uvicorn[standard]>=0.24.0.post1",

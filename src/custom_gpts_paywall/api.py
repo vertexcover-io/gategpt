@@ -2,6 +2,7 @@ from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel, Field, EmailStr
 from typing import Annotated
 from fastapi import FastAPI, Depends, Security, Header, BackgroundTasks, HTTPException
+from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from custom_gpts_paywall.config import (
     create_config,
@@ -28,6 +29,10 @@ class UserCreateRequest(BaseModel):
 class UserCreateResponse(UserCreateRequest):
     uuid: str
     api_key: str
+
+
+class JSONMessageResponse(BaseModel):
+    message: str
 
 
 def env_config() -> EnvConfig:
@@ -99,6 +104,7 @@ def create_user(user_req: UserCreateRequest, config: ConfigDep, session: DbSessi
 @app.post(
     "/api/v1/verification-request",
     status_code=202,
+    response_model=JSONMessageResponse,
 )
 def create_verification_request(
     config: ConfigDep, user: UserDep, session: DbSession, bg_tasks: BackgroundTasks
@@ -153,6 +159,7 @@ class VerifyOTPRequest(BaseModel):
 @app.post(
     "/api/v1/verify",
     status_code=200,
+    response_model=JSONMessageResponse,
 )
 def verify_otp(
     verify_request: VerifyOTPRequest,
@@ -189,3 +196,39 @@ def verify_otp(
     return {
         "message": "OTP has been verified successfully",
     }
+
+
+@app.get("/privacy-policy", response_class=HTMLResponse)
+async def privacy_policy():
+    return """
+    <html>
+        <body>
+            <h1>Privacy Policy for GPT Verifier</h1>
+            <p><strong>Effective Date: 19th Nov, 2023</strong></p>
+            <h2>Overview</h2>
+            <p>GPT Verifier, powered by custom GPT technology, offers an email verification service. This privacy policy describes how we collect, use, and safeguard your personal information in relation to this service.</p>
+            <h2>Data Collection</h2>
+            <ol>
+                <li><strong>Email Addresses:</strong> We collect email addresses submitted by users for the purpose of verification.</li>
+                <li><strong>Verification Data:</strong> Information generated or related to the email verification process is also collected.</li>
+            </ol>
+            <h2>Use of Data</h2>
+            <p>Your data is used exclusively for:</p>
+            <ol>
+                <li>Conducting email verification processes.</li>
+                <li>Enhancing the accuracy and efficiency of our verification service.</li>
+            </ol>
+            <h2>Data Sharing and Disclosure</h2>
+            <ol>
+                <li><strong>Service Providers:</strong> We may share data with trusted third parties who assist us in operating our service, conducting our business, or serving our users, so long as those parties agree to keep this information confidential.</li>
+                <li><strong>Legal Requirements:</strong> We may disclose your information when we believe release is appropriate to comply with the law, enforce our site policies, or protect ours or others' rights, property, or safety.</li>
+            </ol>
+            <h2>Data Security</h2>
+            <p>We implement a variety of security measures to maintain the safety of your personal information.</p>
+            <h2>Changes to This Policy</h2>
+            <p>We reserve the right to modify this policy at any time. Changes will be posted on this page with an updated effective date.</p>
+            <h2>Contact Us</h2>
+            <p>For questions about this privacy policy, please contact us at contact@vertexcover.io.</p>
+        </body>
+    </html>
+    """
