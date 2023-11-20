@@ -1,0 +1,31 @@
+version: '3.6'
+
+services:
+  # FastAPI application
+  custom-gpts-paywall:
+    build:
+      context: .
+    container_name: custom-gpts-paywall
+    ports:
+      - "8000:80"  # Map port 8000 on your host to port 80 in the container
+    depends_on:
+      - postgres  # Ensure that the PostgreSQL service starts first
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://dev:dev123@postgres:5432/custom_gpts_paywall
+    volumes:
+      - ./:/app
+    
+  # PostgreSQL database
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev123  # Replace 'yourpassword' with your desired PostgreSQL password
+      POSTGRES_DB: custom_gpts_paywall  # Replace 'custom_gpts_paywall' with your desired database name
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

@@ -26,10 +26,7 @@ build-backend = "hatchling.build"
 
 [tool.rye]
 managed = true
-dev-dependencies = [
-    "ipython>=8.12.3",
-    "pre-commit>=3.5.0",
-]
+dev-dependencies = ["ipython>=8.12.3", "pre-commit>=3.5.0"]
 
 [tool.hatch.metadata]
 allow-direct-references = true
@@ -38,6 +35,9 @@ allow-direct-references = true
 lint = "ruff check --fix ."
 format = "ruff format "
 dev = "uvicorn src.custom_gpts_paywall.api:app --reload --host 0.0.0.0 --port 8000"
+docker-run = "docker-compose up"
+docker-upgrade = "docker-compose exec -t  custom-gpts-paywall alembic upgrade"
+docker-downgrade = "docker-compose exec -t  custom-gpts-paywall alembic downgrade"
 downgrade = "rye run alembic downgrade"
 upgrade = "rye run alembic upgrade"
 revision = "rye run alembic revision --autogenerate"
