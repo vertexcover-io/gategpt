@@ -13,6 +13,6 @@ COPY ./ /app
 
 ENV PYTHONPATH="/app/src:$PYTHONPATH"
 
-CMD ["uvicorn", "src.custom_gpts_paywall.api:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["python", "serve.py"]
 
 
