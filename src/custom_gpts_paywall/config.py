@@ -7,7 +7,6 @@ from sqlalchemy import create_engine, Engine
 from sqlalchemy.orm import sessionmaker, Session
 from functools import lru_cache
 from datetime import timedelta
-from sqlalchemy.dialects.postgresql import dialect
 
 DEFAULT_VERIFICATION_EXPIRY = timedelta(seconds=300)
 DEFAULT_MIN_DELAY_BETWEEN_VERIFICATION = timedelta(seconds=20)

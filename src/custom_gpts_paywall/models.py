@@ -1,13 +1,10 @@
 # Create a model to for user account in sqlalchmey
-from typing import List
-from typing import Optional
 from sqlalchemy import ForeignKey
 from sqlalchemy import String, Boolean, Interval, func, Enum as EnumColumn
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy import DateTime
 from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import relationship
 from datetime import datetime, timedelta
 from enum import Enum
 import shortuuid

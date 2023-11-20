@@ -28,13 +28,19 @@ build-backend = "hatchling.build"
 managed = true
 dev-dependencies = [
     "ipython>=8.12.3",
+    "pre-commit>=3.5.0",
 ]
 
 [tool.hatch.metadata]
 allow-direct-references = true
 
 [tool.rye.scripts]
+lint = "ruff check --fix ."
+format = "ruff format "
 dev = "uvicorn src.custom_gpts_paywall.api:app --reload --host 0.0.0.0 --port 8000"
 downgrade = "rye run alembic downgrade"
 upgrade = "rye run alembic upgrade"
 revision = "rye run alembic revision --autogenerate"
+
+[tool.ruff]
+fix = true

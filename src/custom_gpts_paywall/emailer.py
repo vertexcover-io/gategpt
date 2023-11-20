@@ -1,4 +1,3 @@
-import requests
 from custom_gpts_paywall.config import EnvConfig
 from custom_gpts_paywall.models import User
 import boto3

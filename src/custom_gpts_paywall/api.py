@@ -1,7 +1,7 @@
 from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel, Field, EmailStr
 from typing import Annotated
-from fastapi import FastAPI, Depends, Security, Header, BackgroundTasks, HTTPException
+from fastapi import FastAPI, Depends, BackgroundTasks, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from custom_gpts_paywall.config import (
@@ -12,7 +12,7 @@ from custom_gpts_paywall.config import (
 from custom_gpts_paywall.emailer import send_verification_email
 from custom_gpts_paywall.models import User, VerificationMedium, VerificationRequest
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 import random
 from custom_gpts_paywall.utils import utcnow
 
@@ -173,8 +173,8 @@ def verify_otp(
         .filter(
             VerificationRequest.user_id == user.id,
             VerificationRequest.otp == verify_request.otp,
-            VerificationRequest.is_verified == False,
-            VerificationRequest.is_archived == False,
+            VerificationRequest.is_verified.is_(False),
+            VerificationRequest.is_archived.is_(False),
             (VerificationRequest.created_at + user.token_expiry) > now,
         )
         .first()
