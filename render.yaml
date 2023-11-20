@@ -1,5 +1,5 @@
 databases:
-  - name: postgres-db
+  - name: custom_gpts_paywall_postgres
     region: singapore
     plan: free
     databaseName: custom_gpts_paywall
