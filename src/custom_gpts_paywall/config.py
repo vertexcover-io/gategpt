@@ -1,5 +1,5 @@
 import os
-from typing import Callable
+from typing import Callable, Optional
 from pydantic import BaseModel, ConfigDict, Field
 from dotenv import load_dotenv
 from functools import cached_property
@@ -18,7 +18,7 @@ class EnvConfig(BaseModel):
     db_url: str
     secret_key: str
     port: int = Field(default=8000)
-    sendx_api_key: str
+    sendx_api_key: Optional[str]
     min_delay_between_verification: timedelta
     email_from: str
     aws_region: str

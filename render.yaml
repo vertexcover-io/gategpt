@@ -1,0 +1,38 @@
+databases:
+  - name: postgres-db
+    region: singapore
+    plan: free
+    databaseName: custom_gpts_paywall
+    user: prod
+    postgresMajorVersion: 15
+    ipAllowList: [] # Only allow internal connections.
+
+services:
+  - type: web
+    name: custom_gpts_paywall
+    runtime: docker
+    region: singapore
+    plan: free
+    numInstances: 1
+    healthCheckPath: /healthcheck
+    repo: https://github.com/vertexcover-io/custom-gpts-paywall
+    branch: master
+    buildFilter:
+      ignoredPaths:
+        - "**/*.md"
+        - ".github/**/*"
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: postgres-db
+          property: connectionString
+      - key: AWS_REGION
+        value: ap-south-1
+
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
