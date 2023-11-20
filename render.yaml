@@ -26,7 +26,7 @@ services:
         value: 8000
       - key: DATABASE_URL
         fromDatabase:
-          name: postgres-db
+          name: custom_gpts_paywall_postgres
           property: connectionString
       - key: AWS_REGION
         value: ap-south-1
