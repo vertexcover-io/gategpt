@@ -54,8 +54,8 @@ class VerificationRequest(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("user_account.id"))
+    email: Mapped[str] = mapped_column(String(255))
     otp: Mapped[str] = mapped_column(String(8))
-    is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     is_archived: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow

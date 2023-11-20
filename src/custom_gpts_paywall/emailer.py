@@ -44,13 +44,13 @@ This code will expire in a short time, so make sure to use it promptly. If you d
 VERIFICATION_EMAIL_SUBJECT = "OTP Verification for Custom GPT: {custom_gpt}"
 
 
-def send_verification_email(env_config: EnvConfig, user: User, otp: str):
+def send_verification_email(env_config: EnvConfig, user: User, email: str, otp: str):
     subject = VERIFICATION_EMAIL_SUBJECT.format(custom_gpt=user.name)
     html_content = VERIFICATION_EMAIL_HTML_TEMPLATE.format(
         custom_gpt=user.name, otp=otp
     )
     text_content = VERIFICATION_EMAIL_TEXT_CONTENT.format(custom_gpt=user.name, otp=otp)
-    to_email = [{"email": user.email}]
+    to_email = [{"email": email}]
     from_email = [{"email": env_config.email_from}]
 
     client = boto3.client(

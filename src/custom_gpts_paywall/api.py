@@ -101,19 +101,28 @@ def create_user(user_req: UserCreateRequest, config: ConfigDep, session: DbSessi
     return user
 
 
+class CreateVerificationRequest(BaseModel):
+    email: EmailStr
+
+
 @app.post(
     "/api/v1/verification-request",
     status_code=202,
     response_model=JSONMessageResponse,
 )
 def create_verification_request(
-    config: ConfigDep, user: UserDep, session: DbSession, bg_tasks: BackgroundTasks
+    config: ConfigDep,
+    create_verification_request: CreateVerificationRequest,
+    user: UserDep,
+    session: DbSession,
+    bg_tasks: BackgroundTasks,
 ):
     now = utcnow()
     last_verification_request = (
         session.query(VerificationRequest)
         .filter(
             VerificationRequest.user_id == user.id,
+            VerificationRequest.email == create_verification_request.email,
             (VerificationRequest.created_at + config.min_delay_between_verification)
             > now,
         )
@@ -128,12 +137,15 @@ def create_verification_request(
         )
 
     verification_request = VerificationRequest(
-        user_id=user.id, otp=random.randint(10000000, 99999999), is_verified=False
+        user_id=user.id,
+        otp=random.randint(10000000, 99999999),
+        email=create_verification_request.email,
     )
     otp = verification_request.otp
     try:
         session.query(VerificationRequest).filter(
             VerificationRequest.user_id == user.id,
+            VerificationRequest.email == create_verification_request.email,
         ).update({VerificationRequest.is_archived: True})
         session.add(verification_request)
         session.commit()
@@ -144,6 +156,7 @@ def create_verification_request(
         send_verification_email,
         env_config=config,
         user=user,
+        email=create_verification_request.email,
         otp=otp,
     )
 
@@ -154,6 +167,7 @@ def create_verification_request(
 
 class VerifyOTPRequest(BaseModel):
     otp: str
+    email: EmailStr
 
 
 @app.post(
@@ -172,8 +186,9 @@ def verify_otp(
         session.query(VerificationRequest)
         .filter(
             VerificationRequest.user_id == user.id,
+            VerificationRequest.email == verify_request.email,
             VerificationRequest.otp == verify_request.otp,
-            VerificationRequest.is_verified.is_(False),
+            VerificationRequest.verified_at.is_(None),
             VerificationRequest.is_archived.is_(False),
             (VerificationRequest.created_at + user.token_expiry) > now,
         )
@@ -189,10 +204,10 @@ def verify_otp(
         VerificationRequest.id == verification_request.id,
     ).update(
         {
-            VerificationRequest.is_verified: True,
             VerificationRequest.verified_at: utcnow(),
         }
     )
+    session.commit()
     return {
         "message": "OTP has been verified successfully",
     }
