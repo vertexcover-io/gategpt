@@ -1,6 +1,13 @@
 # Create a model to for user account in sqlalchmey
-from sqlalchemy import ForeignKey
-from sqlalchemy import String, Boolean, Interval, func, Enum as EnumColumn
+from sqlalchemy import (
+    String,
+    Boolean,
+    Interval,
+    func,
+    Enum as EnumColumn,
+    Text,
+    ForeignKey,
+)
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy import DateTime
@@ -30,6 +37,9 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     uuid: Mapped[str] = mapped_column(String(22), default=shortuuid.uuid)
     name: Mapped[str] = mapped_column(String(30))
+    gpt_name: Mapped[str] = mapped_column(String(30))
+    gpt_description: Mapped[str] = mapped_column(Text(), nullable=True)
+    gpt_url: Mapped[str] = mapped_column(Text(), unique=True)
     email: Mapped[str] = mapped_column(String(255), unique=True)
     verification_medium: Mapped[VerificationMedium] = mapped_column(
         EnumColumn(VerificationMedium, native_enum=False)

@@ -1,6 +1,6 @@
 import os
 from typing import Callable, Optional
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 from functools import cached_property
 from sqlalchemy import create_engine, Engine
@@ -17,12 +17,15 @@ DEFAULT_EMAIL_FROM = "ritesh@vertexcover.io"
 class EnvConfig(BaseModel):
     db_url: str
     port: int = Field(default=8000)
+    api_key: str
     sendx_api_key: Optional[str]
     min_delay_between_verification: timedelta
     email_from: str
     aws_region: str
     aws_access_key_id: str
     aws_secret_access_key: str
+    auth_prompt: str
+    domain_url: str = Field(default="http://localhost:8000")
 
     @cached_property
     def db_engine(self) -> Engine:
@@ -34,11 +37,12 @@ class EnvConfig(BaseModel):
 
 
 @lru_cache()
-def create_config() -> ConfigDict:
+def create_config() -> EnvConfig:
     load_dotenv()
     return EnvConfig(
         db_url=os.getenv("DATABASE_URL"),
         port=os.getenv("PORT", 8000),
+        api_key=os.getenv("API_KEY"),
         sendx_api_key=os.getenv("SENDX_API_KEY"),
         min_delay_between_verification=os.getenv(
             "MIN_DELAY_BETWEEN_VERIFICATION", DEFAULT_MIN_DELAY_BETWEEN_VERIFICATION
@@ -47,4 +51,6 @@ def create_config() -> ConfigDict:
         aws_region=os.getenv("AWS_REGION"),
         aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
         aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+        auth_prompt=os.getenv("AUTH_PROMPT"),
+        domain_url=os.getenv("DOMAIN_NAME"),
     )

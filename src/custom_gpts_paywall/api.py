@@ -1,9 +1,8 @@
 from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel, Field, EmailStr
-from typing import Annotated
+from typing import Annotated, Optional, Any
 from fastapi import FastAPI, Depends, BackgroundTasks, HTTPException
-from fastapi.responses import HTMLResponse
-from fastapi.openapi.models import Server
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from custom_gpts_paywall.config import (
@@ -19,17 +18,13 @@ import random
 from custom_gpts_paywall.utils import utcnow
 
 
-prod_server = Server(
-    url="https://custom-gpts-verifier.vertexcover.io",
-    description="Production server",
-)
-dev_server = Server(
-    url="http://localhost:8000",
-    description="Development server",
-)
-
+config = create_config()
 app = FastAPI(
-    servers=[prod_server.model_dump(), dev_server.model_dump()],
+    servers=[
+        {
+            "url": config.domain_url,
+        }
+    ],
     tags=[
         {
             "name": "admin",
@@ -45,14 +40,20 @@ app = FastAPI(
 
 class UserCreateRequest(BaseModel):
     name: str
+    gpt_name: str
+    gpt_url: str
     email: EmailStr
     verification_medium: VerificationMedium
+    gpt_description: Optional[str] = Field(default=None)
     token_expiry: timedelta = Field(default=DEFAULT_VERIFICATION_EXPIRY)
 
 
 class UserCreateResponse(UserCreateRequest):
     uuid: str
     api_key: str
+    action_schema: dict[str, Any]
+    privacy_policy: str
+    prompt: str
 
 
 class JSONMessageResponse(BaseModel):
@@ -60,7 +61,7 @@ class JSONMessageResponse(BaseModel):
 
 
 def env_config() -> EnvConfig:
-    return create_config()
+    return config
 
 
 ConfigDep = Annotated[EnvConfig, Depends(env_config)]
@@ -79,7 +80,18 @@ DbSession = Annotated[Session, Depends(db_session)]
 bearer_token_security = HTTPBearer(scheme_name="API Key")
 
 
-def api_key_auth(
+def system_api_key_auth(
+    config: ConfigDep,
+    credentials: Annotated[
+        HTTPAuthorizationCredentials, Depends(bearer_token_security)
+    ],
+):
+    api_key = credentials.credentials
+    if api_key != config.api_key:
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
+
+
+def user_api_key_auth(
     db: DbSession,
     credentials: Annotated[
         HTTPAuthorizationCredentials, Depends(bearer_token_security)
@@ -92,7 +104,22 @@ def api_key_auth(
     raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
 
-UserDep = Annotated[User, Depends(api_key_auth)]
+UserDep = Annotated[User, Depends(user_api_key_auth)]
+
+
+def get_openapi_schema(tags: set[str]) -> dict[str, Any]:
+    openapi_schema = app.openapi()
+    filtered_paths = {}
+
+    for path, path_item in openapi_schema["paths"].items():
+        for method, operation in path_item.items():
+            if "tags" in operation and set(operation["tags"]) & tags:
+                if path not in filtered_paths:
+                    filtered_paths[path] = {}
+                filtered_paths[path][method] = operation
+
+    openapi_schema["paths"] = filtered_paths
+    return openapi_schema
 
 
 @app.get("/healthcheck", tags=["private"])
@@ -106,11 +133,19 @@ def healthcheck(config: ConfigDep):
     status_code=201,
     response_model=UserCreateResponse,
 )
-def create_user(user_req: UserCreateRequest, config: ConfigDep, session: DbSession):
+def create_user(
+    user_req: UserCreateRequest,
+    config: ConfigDep,
+    session: DbSession,
+    authenticate: None = Depends(system_api_key_auth),
+):
     # Extract the request parameters
     user = User(
         name=user_req.name,
         email=user_req.email,
+        gpt_name=user_req.gpt_name,
+        gpt_description=user_req.gpt_description,
+        gpt_url=user_req.gpt_url,
         verification_medium=user_req.verification_medium,
         token_expiry=user_req.token_expiry,
     )
@@ -123,7 +158,21 @@ def create_user(user_req: UserCreateRequest, config: ConfigDep, session: DbSessi
             status_code=409, detail=f"User with email {user_req.email} already exists"
         )
     session.refresh(user)
-    return user
+    action_schema = get_openapi_schema({"openai"})
+    return UserCreateResponse(
+        name=user.name,
+        gpt_name=user.gpt_name,
+        gpt_url=user.gpt_url,
+        email=user.email,
+        verification_medium=user.verification_medium,
+        gpt_description=user.gpt_description,
+        token_expiry=user.token_expiry,
+        uuid=user.uuid,
+        api_key=user.api_key,
+        action_schema=action_schema,
+        prompt=config.auth_prompt,
+        privacy_policy=f"{config.domain_url}/privacy-policy",
+    )
 
 
 class CreateVerificationRequest(BaseModel):
@@ -236,6 +285,13 @@ def verify_otp(
     return {
         "message": "OTP has been verified successfully",
     }
+
+
+@app.get(
+    "/platform-openapi-schema", response_class=JSONResponse, include_in_schema=False
+)
+def platform_openapi_scehema():
+    return get_openapi_schema({"admin"})
 
 
 @app.get("/privacy-policy", response_class=HTMLResponse)

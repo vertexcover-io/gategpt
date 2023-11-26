@@ -18,7 +18,7 @@ VERIFICATION_EMAIL_HTML_TEMPLATE = """
         <tr>
             <td bgcolor="#ffffff" style="padding: 40px 30px 40px 30px;">
                 <p>Hello,</p>
-                <p>Your one-time password (OTP) to start using Custom GPT: {custom_gpt} is:</p>
+                <p>Your one-time password (OTP) to start using Custom GPT: {custom_gpt} at {custom_gpt_url} is:</p>
                 <p style="font-size: 24px; font-weight: bold; color: #3498db;">{otp}</p>
                 <p>Please enter this OTP when prompted inside the custom gpt. 
                  This code will expire in a short time, so make sure to use it promptly.</p>
@@ -45,11 +45,13 @@ VERIFICATION_EMAIL_SUBJECT = "OTP Verification for Custom GPT: {custom_gpt}"
 
 
 def send_verification_email(env_config: EnvConfig, user: User, email: str, otp: str):
-    subject = VERIFICATION_EMAIL_SUBJECT.format(custom_gpt=user.name)
+    subject = VERIFICATION_EMAIL_SUBJECT.format(custom_gpt=user.gpt_name)
     html_content = VERIFICATION_EMAIL_HTML_TEMPLATE.format(
-        custom_gpt=user.name, otp=otp
+        custom_gpt=user.gpt_name, otp=otp, custom_gpt_url=user.gpt_url
     )
-    text_content = VERIFICATION_EMAIL_TEXT_CONTENT.format(custom_gpt=user.name, otp=otp)
+    text_content = VERIFICATION_EMAIL_TEXT_CONTENT.format(
+        custom_gpt=user.gpt_name, otp=otp, custom_gpt_url=user.gpt_url
+    )
     to_email = [{"email": email}]
     from_email = [{"email": env_config.email_from}]
 
