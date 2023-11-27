@@ -40,7 +40,7 @@ class User(Base):
     gpt_name: Mapped[str] = mapped_column(String(30))
     gpt_description: Mapped[str] = mapped_column(Text(), nullable=True)
     gpt_url: Mapped[str] = mapped_column(Text(), unique=True)
-    email: Mapped[str] = mapped_column(String(255), unique=True)
+    email: Mapped[str] = mapped_column(String(255))
     verification_medium: Mapped[VerificationMedium] = mapped_column(
         EnumColumn(VerificationMedium, native_enum=False)
     )

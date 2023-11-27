@@ -294,6 +294,11 @@ def platform_openapi_scehema():
     return get_openapi_schema({"admin"})
 
 
+@app.get("/openai-openapi-schema", response_class=JSONResponse, include_in_schema=False)
+def openai_openapi_scehema():
+    return get_openapi_schema({"openai"})
+
+
 @app.get("/privacy-policy", response_class=HTMLResponse)
 async def privacy_policy():
     return """
