@@ -108,7 +108,7 @@ UserDep = Annotated[User, Depends(user_api_key_auth)]
 
 
 def get_openapi_schema(tags: set[str]) -> dict[str, Any]:
-    openapi_schema = app.openapi()
+    openapi_schema = dict(**app.openapi())
     filtered_paths = {}
 
     for path, path_item in openapi_schema["paths"].items():
