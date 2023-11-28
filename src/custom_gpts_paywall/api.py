@@ -1,6 +1,6 @@
 from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel, Field, EmailStr
-from typing import Annotated, Optional, Any
+from typing import Annotated, Optional, Any, Literal
 from fastapi import FastAPI, Depends, BackgroundTasks, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 
@@ -31,8 +31,8 @@ app = FastAPI(
             "description": "Admin API",
         },
         {
-            "name": "openai",
-            "description": "OpenAI Actions API",
+            "name": "gpts",
+            "description": "gpts Actions API",
         },
     ],
 )
@@ -51,8 +51,9 @@ class UserCreateRequest(BaseModel):
 class UserCreateResponse(UserCreateRequest):
     uuid: str
     api_key: str
-    action_schema: dict[str, Any]
-    privacy_policy: str
+    api_key_type: Literal["Bearer"] = Field(default="Bearer")
+    action_schema_url: str
+    privacy_policy_url: str
     prompt: str
 
 
@@ -122,18 +123,22 @@ def get_openapi_schema(tags: set[str]) -> dict[str, Any]:
     return openapi_schema
 
 
-@app.get("/healthcheck", tags=["private"])
+@app.get(
+    "/healthcheck",
+    include_in_schema=False,
+)
 def healthcheck(config: ConfigDep):
     return {"status": "ok"}
 
 
 @app.post(
-    "/api/v1/user",
+    name="register_custom_gpt",
+    path="/api/v1/user",
     tags=["admin"],
     status_code=201,
     response_model=UserCreateResponse,
 )
-def create_user(
+def register_custom_gpt(
     user_req: UserCreateRequest,
     config: ConfigDep,
     session: DbSession,
@@ -158,7 +163,6 @@ def create_user(
             status_code=409, detail=f"User with email {user_req.email} already exists"
         )
     session.refresh(user)
-    action_schema = get_openapi_schema({"openai"})
     return UserCreateResponse(
         name=user.name,
         gpt_name=user.gpt_name,
@@ -169,9 +173,9 @@ def create_user(
         token_expiry=user.token_expiry,
         uuid=user.uuid,
         api_key=user.api_key,
-        action_schema=action_schema,
+        action_schema_url=f"{config.domain_url}{app.url_path_for('gpts_openapi_schema')}",
         prompt=config.auth_prompt,
-        privacy_policy=f"{config.domain_url}/privacy-policy",
+        privacy_policy_url=f"{config.domain_url}{app.url_path_for('privacy_policy')}",
     )
 
 
@@ -181,7 +185,8 @@ class CreateVerificationRequest(BaseModel):
 
 @app.post(
     "/api/v1/verification-request",
-    tags=["openai"],
+    name="start_email_verification",
+    tags=["gpts"],
     status_code=202,
     response_model=JSONMessageResponse,
 )
@@ -245,9 +250,10 @@ class VerifyOTPRequest(BaseModel):
 
 @app.post(
     "/api/v1/verify",
+    name="verify_email_otp",
     status_code=200,
     response_model=JSONMessageResponse,
-    tags=["openai"],
+    tags=["gpts"],
 )
 def verify_otp(
     verify_request: VerifyOTPRequest,
@@ -288,18 +294,26 @@ def verify_otp(
 
 
 @app.get(
-    "/platform-openapi-schema", response_class=JSONResponse, include_in_schema=False
+    "/platform-openapi-schema",
+    response_class=JSONResponse,
+    include_in_schema=False,
+    name="platform_openapi_schema",
 )
 def platform_openapi_scehema():
     return get_openapi_schema({"admin"})
 
 
-@app.get("/openai-openapi-schema", response_class=JSONResponse, include_in_schema=False)
-def openai_openapi_scehema():
-    return get_openapi_schema({"openai"})
+@app.get(
+    "/gpts-openapi-schema",
+    response_class=JSONResponse,
+    include_in_schema=False,
+    name="gpts_openapi_schema",
+)
+def gpts_openapi_scehema():
+    return get_openapi_schema({"gpts"})
 
 
-@app.get("/privacy-policy", response_class=HTMLResponse)
+@app.get("/privacy-policy", response_class=HTMLResponse, name="privacy_policy")
 async def privacy_policy():
     return """
     <html>
