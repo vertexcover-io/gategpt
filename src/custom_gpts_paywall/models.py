@@ -8,7 +8,7 @@ from sqlalchemy import (
     Text,
     ForeignKey,
 )
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, declared_attr, relationship
 from sqlalchemy.orm import Mapped
 from sqlalchemy import DateTime
 from sqlalchemy.orm import mapped_column
@@ -26,6 +26,7 @@ class Base(DeclarativeBase):
 class VerificationMedium(Enum):
     Email = "email"
     Phone = "phone"
+    Google = "google"
 
     def __str__(self):
         return self.value
@@ -59,18 +60,61 @@ class User(Base):
         return f"User(id={self.id!r}, name={self.name!r}, email_address={self.email})"
 
 
-class VerificationRequest(Base):
-    __tablename__ = "verification_request"
-
+class BaseVerificationRequest(Base):
+    __abstract__ = True
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("user_account.id"))
-    email: Mapped[str] = mapped_column(String(255))
-    otp: Mapped[str] = mapped_column(String(8))
+
     is_archived: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow
     )
     verified_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    archived_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    @declared_attr
+    def user_account(cls):
+        return relationship("User")
+
+
+class EmailVerificationRequest(BaseVerificationRequest):
+    __tablename__ = "email_verification_request"
+    email: Mapped[str] = mapped_column(String(255))
+    otp: Mapped[str] = mapped_column(String(8))
+
+
+class OAuthVerificationRequestStatus(Enum):
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    CALLBACK_COMPLETED = "callback_completed"
+    VERIFIED = "verified"
+    FAILED = "failed"
+    EXPIRED = "expired"
+    ARCHIVED = "archived"
+
+
+class OAuthVerificationRequest(BaseVerificationRequest):
+    __tablename__ = "oauth_verification_request"
+    uuid: Mapped[str] = mapped_column(String(22), default=shortuuid.uuid)
+    provider: Mapped[str] = mapped_column(String(30))
+    email: Mapped[str] = mapped_column(String(255), nullable=True)
+    authorization_code: Mapped[str] = mapped_column(String(255), nullable=True)
+    nonce: Mapped[str] = mapped_column(String(22), nullable=True)
+    status: Mapped[OAuthVerificationRequestStatus] = mapped_column(
+        EnumColumn(OAuthVerificationRequestStatus, native_enum=False),
+        default=OAuthVerificationRequestStatus.NOT_STARTED,
+    )
+    oauth_flow_started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    oauth_callback_completed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
