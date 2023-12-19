@@ -337,7 +337,7 @@ class VerifyOTPRequest(BaseModel):
     name="verify_email_otp",
     status_code=200,
     response_model=JSONMessageResponse,
-    tags=["gpts"],
+    tags=["email_verification"],
 )
 def verify_otp(
     verify_request: VerifyOTPRequest,
@@ -705,8 +705,9 @@ def platform_openapi_scehema():
     include_in_schema=False,
     name="gpts_openapi_schema",
 )
-def gpts_openapi_scehema():
-    return get_openapi_schema({"gpts"})
+def gpts_openapi_scehema(tag: str = Query(None)):
+    tags = {tag} if tag else {"email_verification", "oauth_verification"}
+    return get_openapi_schema(tags)
 
 
 @app.get("/privacy-policy", response_class=HTMLResponse, name="privacy_policy")
