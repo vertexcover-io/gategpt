@@ -32,7 +32,7 @@ class VerificationMedium(Enum):
         return self.value
 
 
-class User(Base):
+class UserAccount(Base):
     __tablename__ = "user_account"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -80,7 +80,7 @@ class BaseVerificationRequest(Base):
 
     @declared_attr
     def user_account(cls):
-        return relationship("User")
+        return relationship("UserAccount")
 
 
 class EmailVerificationRequest(BaseVerificationRequest):

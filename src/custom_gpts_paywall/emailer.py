@@ -1,5 +1,5 @@
 from custom_gpts_paywall.config import EnvConfig
-from custom_gpts_paywall.models import User
+from custom_gpts_paywall.models import UserAccount
 import boto3
 
 VERIFICATION_EMAIL_HTML_TEMPLATE = """
@@ -44,7 +44,9 @@ This code will expire in a short time, so make sure to use it promptly. If you d
 VERIFICATION_EMAIL_SUBJECT = "OTP Verification for Custom GPT: {custom_gpt}"
 
 
-def send_verification_email(env_config: EnvConfig, user: User, email: str, otp: str):
+def send_verification_email(
+    env_config: EnvConfig, user: UserAccount, email: str, otp: str
+):
     subject = VERIFICATION_EMAIL_SUBJECT.format(custom_gpt=user.gpt_name)
     html_content = VERIFICATION_EMAIL_HTML_TEMPLATE.format(
         custom_gpt=user.gpt_name, otp=otp, custom_gpt_url=user.gpt_url
