@@ -17,6 +17,7 @@ GOOGLE_OAUTH_LOGIN_URL = "https://accounts.google.com/o/oauth2/v2/auth?response_
 
 
 class EnvConfig(BaseModel):
+    debug: bool = Field(default=False)
     db_url: str
     secret_key: str
     port: int = Field(default=8000)
@@ -38,6 +39,10 @@ class EnvConfig(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+
+    @property
+    def url_scheme(self) -> str:
+        return "https" if not self.debug else "http"
 
     @validator("db_engine", pre=True, always=True)
     def set_db_engine(cls, v, values: dict[str, Any]) -> Engine:
@@ -76,6 +81,7 @@ def create_config() -> EnvConfig:
     load_dotenv()
     print("Loading envconfig")
     return EnvConfig(
+        debug=os.getenv("DEBUG", "0") == "1",
         db_url=os.getenv("DATABASE_URL"),
         secret_key=os.getenv("SECRET_KEY"),
         port=os.getenv("PORT", 8000),

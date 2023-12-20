@@ -27,7 +27,7 @@ from custom_gpts_paywall.models import (
 from sqlalchemy.orm import Session
 from datetime import timedelta
 import random
-from custom_gpts_paywall.utils import utcnow
+from custom_gpts_paywall.utils import utcnow, url_for
 
 
 config = create_config()
@@ -318,11 +318,11 @@ def start_oauth_verification(
     return CreateOAuthVerificationResponse(
         provider=create_verification_request.provider,
         oauth_verification_request_id=oauth_verification_request.uuid,
-        login_url=str(
-            request.url_for(
-                "google_oauth_login",
-                verification_request_id=oauth_verification_request.uuid,
-            )
+        login_url=url_for(
+            request,
+            "google_oauth_login",
+            verification_request_id=oauth_verification_request.uuid,
+            scheme=config.url_scheme,
         ),
     )
 
@@ -478,7 +478,9 @@ async def verify_oauth(
         authorization_code=oauth_verification_request.authorization_code,
         nonce=oauth_verification_request.nonce,
         verification_request_uuid=verify_request.verification_request_id,
-        redirect_uri=str(request.url_for("oauth_google_callback")),
+        redirect_uri=url_for(
+            request, "oauth_google_callback", scheme=config.url_scheme
+        ),
         config=config,
         logger=logger,
     )
@@ -552,7 +554,9 @@ async def google_oauth_login(
     return await config.google_oauth_client.authorize_redirect(
         request,
         redirect_uri=request.url_for(
+            request,
             "oauth_google_callback",
+            scheme=config.url_scheme,
         ),
         state=verification_request_id,
         nonce=nonce,
