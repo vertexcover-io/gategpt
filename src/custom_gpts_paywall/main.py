@@ -1,8 +1,4 @@
-import logging
-import traceback
-from fastapi import FastAPI, Request, status
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 from custom_gpts_paywall.config import create_config
 from custom_gpts_paywall.routers.root import root_router
@@ -32,18 +28,6 @@ def create_app() -> FastAPI:
             },
         ],
     )
-
-    @app.exception_handler(RequestValidationError)
-    async def validation_exception_handler(
-        request: Request, exc: RequestValidationError
-    ):
-        exc_str = f"{exc}".replace("\n", " ").replace("   ", " ")
-        traceback.print_exc()
-        logging.error(f"{request}: {exc_str}")
-        content = {"status_code": 10422, "message": exc_str, "data": None}
-        return JSONResponse(
-            content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
-        )
 
     app.add_middleware(SessionMiddleware, secret_key=config.secret_key)
     app.include_router(root_router)

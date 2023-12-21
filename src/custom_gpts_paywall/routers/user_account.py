@@ -1,6 +1,6 @@
 from datetime import timedelta
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.exc import IntegrityError
 from custom_gpts_paywall.config import DEFAULT_VERIFICATION_EXPIRY
@@ -8,6 +8,7 @@ from custom_gpts_paywall.dependencies import (
     ConfigDep,
     DbSession,
     LoggerDep,
+    user_account_auth,
 )
 from custom_gpts_paywall.models import UserAccount, VerificationMedium
 from custom_gpts_paywall.utils import url_for
@@ -22,6 +23,7 @@ class UserCreateRequest(BaseModel):
     gpt_url: str
     email: EmailStr
     verification_medium: VerificationMedium
+    store_tokens: bool = Field(default=True)
     gpt_description: Optional[str] = Field(default=None)
     token_expiry: timedelta = Field(default=DEFAULT_VERIFICATION_EXPIRY)
 
@@ -48,7 +50,7 @@ def register_custom_gpt(
     config: ConfigDep,
     session: DbSession,
     logger: LoggerDep,
-    #    __: None = Depends(system_api_key_auth),
+    __: None = Depends(user_account_auth),
 ):
     # Extract the request parameters
     user = UserAccount(
@@ -59,6 +61,7 @@ def register_custom_gpt(
         gpt_url=user_req.gpt_url,
         verification_medium=user_req.verification_medium,
         token_expiry=user_req.token_expiry,
+        store_tokens=user_req.store_tokens,
     )
     try:
         session.add(user)

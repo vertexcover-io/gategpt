@@ -17,6 +17,8 @@ from datetime import datetime, timedelta
 from enum import Enum
 import shortuuid
 from uuid import uuid4, UUID
+
+from sqlalchemy.sql import expression
 from custom_gpts_paywall.config import DEFAULT_VERIFICATION_EXPIRY
 from custom_gpts_paywall.utils import utcnow
 
@@ -46,6 +48,9 @@ class UserAccount(Base):
     email: Mapped[str] = mapped_column(String(255))
     verification_medium: Mapped[VerificationMedium] = mapped_column(
         EnumColumn(VerificationMedium, native_enum=False)
+    )
+    store_tokens: Mapped[bool] = mapped_column(
+        Boolean, server_default=expression.false(), default=False
     )
     token_expiry: Mapped[timedelta] = mapped_column(
         Interval, default=func.interval(DEFAULT_VERIFICATION_EXPIRY.microseconds)
@@ -123,4 +128,19 @@ class OAuthVerificationRequest(BaseVerificationRequest):
     oauth_callback_completed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
+    )
+
+
+class OAuthToken(Base):
+    __tablename__ = "oauth_token"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_account_id: Mapped[int] = mapped_column(ForeignKey("user_account.id"))
+    access_token: Mapped[str] = mapped_column(String(255))
+    refresh_token: Mapped[str] = mapped_column(String(255))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow
     )

@@ -1,13 +1,18 @@
+from datetime import datetime, timezone
 from typing import Annotated
+import uuid
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from pydantic import BaseModel, HttpUrl, field_validator
+from pydantic import BaseModel, HttpUrl, ValidationError, field_validator
 import shortuuid
+from sqlalchemy.orm import joinedload
 from custom_gpts_paywall.config import EnvConfig
 
 from custom_gpts_paywall.dependencies import ConfigDep, DbSession
 from custom_gpts_paywall.models import (
+    OAuthToken,
     OAuthVerificationRequest,
     OAuthVerificationRequestStatus,
     UserAccount,
@@ -19,7 +24,7 @@ oauth2_router = APIRouter()
 
 
 class AuthorizationRequestParams(BaseModel):
-    client_id: str
+    client_id: uuid.UUID
     redirect_uri: HttpUrl
     state: str
     scope: list[str]
@@ -38,7 +43,11 @@ async def oauth2_authorize(
     config: ConfigDep,
     session: DbSession,
 ):
-    params = AuthorizationRequestParams(**request.query_params._dict)
+    try:
+        params = AuthorizationRequestParams(**request.query_params._dict)
+    except ValidationError as e:
+        raise RequestValidationError(errors=e.errors())
+
     user_account = (
         session.query(UserAccount)
         .filter(UserAccount.client_id == params.client_id)
@@ -81,6 +90,7 @@ async def oauth2_authorize(
         ),
         state=verification_request_id,
         nonce=nonce,
+        access_type="offline",
     )
 
 
@@ -164,6 +174,7 @@ async def oauth2_token(
             OAuthVerificationRequest.redirect_uri == redirect_uri,
             OAuthVerificationRequest.user_id == user_account.id,
         )
+        .options(joinedload(OAuthVerificationRequest.user_account))
         .first()
     )
     if not oauth_verification_request:
@@ -198,5 +209,17 @@ async def oauth2_token(
     oauth_verification_request.status = OAuthVerificationRequestStatus.VERIFIED
     oauth_verification_request.verified_at = utcnow()
     oauth_verification_request.email = email
+    session.add(oauth_verification_request)
+    if user_account.store_tokens:
+        oauth_token = OAuthToken(
+            user_account_id=user_account.id,
+            access_token=token["access_token"],
+            refresh_token=token["refresh_token"],
+            expires_at=datetime.utcfromtimestamp(token["expires_at"]).replace(
+                tzinfo=timezone.utc
+            ),
+        )
+        session.add(oauth_token)
+
     session.commit()
     return token
