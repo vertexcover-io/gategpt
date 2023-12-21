@@ -36,6 +36,7 @@ class EnvConfig(BaseModel):
     db_engine: Engine = Field(default=None)
     session_local: Callable[[], Session] = Field(default=None)
     google_oauth_client: StarletteOAuth2App = Field(default=None)
+    oauth_redirect_uri_host: str = Field(default="chat.openai.com")
 
     class Config:
         arbitrary_types_allowed = True
@@ -99,4 +100,5 @@ def create_config() -> EnvConfig:
         domain_url=os.getenv("DOMAIN_NAME"),
         google_oauth_client_id=os.getenv("GOOGLE_OAUTH_CLIENT_ID"),
         google_oauth_client_secret=os.getenv("GOOGLE_OAUTH_CLIENT_SECRET"),
+        oauth_redirect_uri_host=os.getenv("OAUTH_REDIRECT_URI_HOST"),
     )

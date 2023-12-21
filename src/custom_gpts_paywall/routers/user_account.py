@@ -1,13 +1,13 @@
 from datetime import timedelta
-from typing import Literal, Optional
-from fastapi import APIRouter, Depends, HTTPException, Request
+from typing import Optional
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.exc import IntegrityError
 from custom_gpts_paywall.config import DEFAULT_VERIFICATION_EXPIRY
 from custom_gpts_paywall.dependencies import (
     ConfigDep,
     DbSession,
-    system_api_key_auth,
+    LoggerDep,
 )
 from custom_gpts_paywall.models import UserAccount, VerificationMedium
 from custom_gpts_paywall.utils import url_for
@@ -28,11 +28,11 @@ class UserCreateRequest(BaseModel):
 
 class UserCreateResponse(UserCreateRequest):
     uuid: str
-    api_key: str
-    api_key_type: Literal["Bearer"] = Field(default="Bearer")
     action_schema_url: str
     privacy_policy_url: str
     prompt: str
+    client_id: str
+    client_secret: str
 
 
 @user_account_router.post(
@@ -47,7 +47,8 @@ def register_custom_gpt(
     user_req: UserCreateRequest,
     config: ConfigDep,
     session: DbSession,
-    __: None = Depends(system_api_key_auth),
+    logger: LoggerDep,
+    #    __: None = Depends(system_api_key_auth),
 ):
     # Extract the request parameters
     user = UserAccount(
@@ -62,7 +63,8 @@ def register_custom_gpt(
     try:
         session.add(user)
         session.commit()
-    except IntegrityError:
+    except IntegrityError as ex:
+        logger.error(f"Failed to create user: {ex}")
         session.rollback()
         raise HTTPException(
             status_code=409, detail=f"User with email {user_req.email} already exists"
@@ -83,10 +85,11 @@ def register_custom_gpt(
         gpt_description=user.gpt_description,
         token_expiry=user.token_expiry,
         uuid=user.uuid,
-        api_key=user.api_key,
         action_schema_url=f"{config.domain_url}{url_for(request, 'openapi_schema_by_tags', query_params={'tags': tags})}",
         prompt=config.email_verification_prompt
         if user_req.verification_medium == "email"
         else config.oauth_verification_prompt,
-        privacy_policy_url=f"{config.domain_url}{url_for('privacy_policy')}",
+        privacy_policy_url=url_for(request, "privacy_policy"),
+        client_id=str(user.client_id),
+        client_secret=str(user.client_secret),
     )

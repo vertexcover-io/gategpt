@@ -1,5 +1,6 @@
 # Create a model to for user account in sqlalchmey
 from sqlalchemy import (
+    UUID as UUIDColumn,
     String,
     Boolean,
     Interval,
@@ -15,6 +16,7 @@ from sqlalchemy.orm import mapped_column
 from datetime import datetime, timedelta
 from enum import Enum
 import shortuuid
+from uuid import uuid4, UUID
 from custom_gpts_paywall.config import DEFAULT_VERIFICATION_EXPIRY
 from custom_gpts_paywall.utils import utcnow
 
@@ -48,16 +50,18 @@ class UserAccount(Base):
     token_expiry: Mapped[timedelta] = mapped_column(
         Interval, default=func.interval(DEFAULT_VERIFICATION_EXPIRY.microseconds)
     )
-    api_key: Mapped[str] = mapped_column(String(22), default=shortuuid.uuid)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow
     )
+    client_id: Mapped[UUID] = mapped_column(UUIDColumn(as_uuid=True), default=uuid4)
+    # TODO: Convert to a hashed value
+    client_secret: Mapped[UUID] = mapped_column(UUIDColumn(as_uuid=True), default=uuid4)
 
     def __repr__(self) -> str:
-        return f"User(id={self.id!r}, name={self.name!r}, email_address={self.email})"
+        return f"UserAccount(id={self.id!r}, name={self.name!r}, email_address={self.email})"
 
 
 class BaseVerificationRequest(Base):
@@ -104,6 +108,8 @@ class OAuthVerificationRequest(BaseVerificationRequest):
     uuid: Mapped[str] = mapped_column(String(22), default=shortuuid.uuid)
     provider: Mapped[str] = mapped_column(String(30))
     email: Mapped[str] = mapped_column(String(255), nullable=True)
+    state: Mapped[str] = mapped_column(String(255))
+    redirect_uri: Mapped[str] = mapped_column(String(255))
     authorization_code: Mapped[str] = mapped_column(String(255), nullable=True)
     nonce: Mapped[str] = mapped_column(String(22), nullable=True)
     status: Mapped[OAuthVerificationRequestStatus] = mapped_column(

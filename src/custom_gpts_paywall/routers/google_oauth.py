@@ -1,7 +1,8 @@
 from logging import Logger
+from urllib.parse import urlencode
 from boto3 import Session
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import RedirectResponse
 import shortuuid
 from sqlalchemy.orm import joinedload
 
@@ -83,8 +84,11 @@ async def google_oauth_login(
 
 
 class OAuthCallBackException(Exception):
-    def __init__(self, status: OAuthVerificationRequestStatus, message: str) -> None:
+    def __init__(
+        self, status: OAuthVerificationRequestStatus, error_code: str, message: str
+    ) -> None:
         super().__init__(message)
+        self.error_code = error_code
         self.message = message
         self.status = status
 
@@ -93,22 +97,28 @@ class OAuthCallBackException(Exception):
 
 
 def _verify_oauth_callback_request(request: Request, logger: Logger) -> tuple[str, str]:
-    error = request.query_params.get("error", None)
+    error_code = request.query_params.get("error", None)
     code = request.query_params.get("code", None)
     verification_request_uuid = request.query_params.get("state")
     error_description = None
-    if error:
+    if error_code:
         logger.error(
             f"Error while login using google oauth: {error_description}, Verification Request UUId: {verification_request_uuid}"
         )
         error_description = request.query_params.get("error_description")
-    elif code is None or verification_request_uuid is None:
-        logger.error("Error while login using google oauth: State/Code is not passed")
-        error_description = "Google Authentication Failed. Please try again"
+
+    elif code is None:
+        logger.error("Error while login using google oauth: Code is not passed")
+        error_code = "invalid_request"
+        error_description = "Missing authorization  code"
+    elif verification_request_uuid is None:
+        logger.error("Error while login using google oauth: State is not passed")
+        error_code = "invalid_request"
+        error_description = "Missing state"
 
     if error_description:
         raise OAuthCallBackException(
-            OAuthVerificationRequestStatus.FAILED, error_description
+            OAuthVerificationRequestStatus.FAILED, error_code, error_description
         )
 
     return code, verification_request_uuid
@@ -132,6 +142,7 @@ def _verify_oauth_verification_request(
         )
         raise OAuthCallBackException(
             OAuthVerificationRequestStatus.FAILED,
+            "server_error",
             "Google Authentication Failed. Please try again",
         )
     user = verification_request.user_account
@@ -141,6 +152,7 @@ def _verify_oauth_verification_request(
         )
         raise OAuthCallBackException(
             OAuthVerificationRequestStatus.EXPIRED,
+            "access_denied",
             "Google Authentication Request Expired.",
         )
     elif verification_request.archived_at is not None:
@@ -149,7 +161,7 @@ def _verify_oauth_verification_request(
         )
         raise OAuthCallBackException(
             OAuthVerificationRequestStatus.ARCHIVED,
-            "Google Authentication Request Expired.",
+            "access_denied" "Google Authentication Request Expired.",
         )
 
     return verification_request
@@ -162,8 +174,6 @@ async def oauth_google_callback(
     request: Request, config: ConfigDep, session: DbSession, logger: LoggerDep
 ):
     code = None
-    http_status_code = None
-    response = None
     status = None
     try:
         code, verification_request_uuid = _verify_oauth_callback_request(
@@ -173,13 +183,21 @@ async def oauth_google_callback(
             verification_request_uuid, session, logger
         )
         status = OAuthVerificationRequestStatus.CALLBACK_COMPLETED
-        response = {"authorization_code": code}
-        http_status_code = 200
+        query_params = {
+            "code": verification_request.uuid,
+            "state": verification_request.state,
+        }
     except OAuthCallBackException as e:
         status = e.status
         code = None
-        http_status_code = 422
-        response = {"error": e.message}
+        query_params = {
+            "error": e.error_code,
+            "error_description": e.message,
+            "state": verification_request.state,
+        }
+
+    query = urlencode(query_params)
+    redirect_uri = f"{verification_request.redirect_uri}?{query}"
 
     session.query(OAuthVerificationRequest).filter(
         OAuthVerificationRequest.id == verification_request.id,
@@ -191,7 +209,6 @@ async def oauth_google_callback(
         }
     )
     session.commit()
-    return JSONResponse(
-        status_code=http_status_code,
-        content=response,
-    )
+    logger.info(f"After Google OAuth Callback redirecting to: {redirect_uri}")
+    print(f"After Google OAuth Callback redirecting to: {redirect_uri}")
+    return RedirectResponse(url=redirect_uri)
