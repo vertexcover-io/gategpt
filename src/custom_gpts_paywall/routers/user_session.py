@@ -5,7 +5,7 @@ import httpx
 from pydantic import BaseModel
 from authlib.integrations.httpx_client import OAuth2Client
 from custom_gpts_paywall.dependencies import DbSession, LoggerDep
-from custom_gpts_paywall.models import UserSession
+from custom_gpts_paywall.models import CustomGPTApplication, UserSession
 
 
 user_session_router = APIRouter()
@@ -33,6 +33,14 @@ def create_session(
     ],
     logger: LoggerDep,
 ):
+    gpt_application = (
+        session.query(CustomGPTApplication)
+        .filter(CustomGPTApplication.uuid == create_session_request.gpt_application_id)
+        .first()
+    )
+    if not gpt_application:
+        raise HTTPException(status_code=404, detail="GPT Application not found")
+
     client = OAuth2Client(token={"access_token": credentials.credentials})
 
     # Google's userinfo endpoint
@@ -60,14 +68,13 @@ def create_session(
     # Parse the response to get user information
     user_info = response.json()
     user_session = UserSession(
-        gpt_application_id=create_session_request.gpt_application_id,
+        gpt_application_id=gpt_application.id,
         email=user_info["email"],
         name=user_info["name"],
     )
     session.add(user_session)
     session.commit()
     return {
-        "gpt_application_id": create_session_request.gpt_application_id,
         "email": user_info["email"],
         "name": user_info["name"],
     }
