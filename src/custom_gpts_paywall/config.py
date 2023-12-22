@@ -81,6 +81,12 @@ class EnvConfig(BaseModel):
 def create_config() -> EnvConfig:
     load_dotenv()
     print("Loading envconfig")
+    optional_kwargs = {}
+    if os.getenv("OAUTH_REDIRECT_URI_HOST"):
+        optional_kwargs["oauth_redirect_uri_host"] = os.getenv(
+            "OAUTH_REDIRECT_URI_HOST"
+        )
+
     return EnvConfig(
         debug=os.getenv("DEBUG", "0") == "1",
         db_url=os.getenv("DATABASE_URL"),
@@ -100,5 +106,5 @@ def create_config() -> EnvConfig:
         domain_url=os.getenv("DOMAIN_NAME"),
         google_oauth_client_id=os.getenv("GOOGLE_OAUTH_CLIENT_ID"),
         google_oauth_client_secret=os.getenv("GOOGLE_OAUTH_CLIENT_SECRET"),
-        oauth_redirect_uri_host=os.getenv("OAUTH_REDIRECT_URI_HOST"),
+        **optional_kwargs,
     )
