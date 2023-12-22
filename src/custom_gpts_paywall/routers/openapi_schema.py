@@ -36,6 +36,7 @@ def filter_openapi_schema_by_tags(schema: dict[str, Any], tags: set[OpenAPISchem
     """
     filtered_schema = {
         "openapi": schema["openapi"],
+        "servers": schema["servers"],
         "info": schema["info"],
         "paths": {},
         "components": {
@@ -96,9 +97,17 @@ def filter_openapi_schema_by_tags(schema: dict[str, Any], tags: set[OpenAPISchem
     # Add required components to the filtered schema
     for component_type, component_names in required_components.items():
         for component_name in component_names:
-            filtered_schema["components"][component_type][component_name] = schema[
-                "components"
-            ][component_type][component_name]
+            component = schema["components"][component_type][component_name]
+            filtered_schema["components"][component_type][component_name] = component
+            other_component_refs = find_values_with_key(component, "$ref")
+            for ref in other_component_refs:
+                if ref:
+                    other_component_type, other_component_name = parse_component_ref(
+                        ref
+                    )
+                    filtered_schema["components"][other_component_type][
+                        other_component_name
+                    ] = schema["components"][other_component_type][other_component_name]
 
     return filtered_schema
 

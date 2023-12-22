@@ -10,7 +10,7 @@ import shortuuid
 from sqlalchemy.orm import joinedload
 from custom_gpts_paywall.config import EnvConfig
 
-from custom_gpts_paywall.dependencies import ConfigDep, DbSession
+from custom_gpts_paywall.dependencies import ConfigDep, DbSession, LoggerDep
 from custom_gpts_paywall.models import (
     OAuthToken,
     OAuthVerificationRequest,
@@ -160,6 +160,7 @@ async def oauth2_token(
     grant_type: Annotated[str, Form()],
     code: Annotated[str, Form()],
     redirect_uri: Annotated[str, Form()],
+    logger: LoggerDep,
 ):
     if grant_type != "authorization_code":
         raise HTTPException(
@@ -206,6 +207,9 @@ async def oauth2_token(
     email = await _fetch_user_email(
         token=token, nonce=oauth_verification_request.nonce, config=config
     )
+    logger.info(
+        f"Successfully fetched user email: {email} and token: {token} from google oauth"
+    )
     oauth_verification_request.status = OAuthVerificationRequestStatus.VERIFIED
     oauth_verification_request.verified_at = utcnow()
     oauth_verification_request.email = email
@@ -214,7 +218,7 @@ async def oauth2_token(
         oauth_token = OAuthToken(
             gpt_application_id=gpt_application.id,
             access_token=token["access_token"],
-            refresh_token=token["refresh_token"],
+            refresh_token=token.get("refresh_token", ""),
             expires_at=datetime.utcfromtimestamp(token["expires_at"]).replace(
                 tzinfo=timezone.utc
             ),
