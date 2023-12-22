@@ -23,7 +23,6 @@ class UserCreateRequest(BaseModel):
     gpt_url: str
     email: EmailStr
     verification_medium: VerificationMedium
-    store_tokens: bool = Field(default=True)
     gpt_description: Optional[str] = Field(default=None)
     token_expiry: timedelta = Field(default=DEFAULT_VERIFICATION_EXPIRY)
 
@@ -40,7 +39,6 @@ class UserCreateResponse(UserCreateRequest):
 @user_account_router.post(
     name="register_custom_gpt",
     path="/api/v1/user",
-    tags=["admin"],
     status_code=201,
     response_model=UserCreateResponse,
 )
@@ -61,7 +59,6 @@ def register_custom_gpt(
         gpt_url=user_req.gpt_url,
         verification_medium=user_req.verification_medium,
         token_expiry=user_req.token_expiry,
-        store_tokens=user_req.store_tokens,
     )
     try:
         session.add(user)
