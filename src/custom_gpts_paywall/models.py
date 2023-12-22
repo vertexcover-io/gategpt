@@ -36,8 +36,8 @@ class VerificationMedium(Enum):
         return self.value
 
 
-class UserAccount(Base):
-    __tablename__ = "user_account"
+class CustomGPTApplication(Base):
+    __tablename__ = "custom_gpt_application"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     uuid: Mapped[str] = mapped_column(String(22), default=shortuuid.uuid)
@@ -66,13 +66,15 @@ class UserAccount(Base):
     client_secret: Mapped[UUID] = mapped_column(UUIDColumn(as_uuid=True), default=uuid4)
 
     def __repr__(self) -> str:
-        return f"UserAccount(id={self.id!r}, name={self.name!r}, email_address={self.email})"
+        return f"CustomGPTApplication(id={self.id!r}, name={self.name!r}, email_address={self.email})"
 
 
 class BaseVerificationRequest(Base):
     __abstract__ = True
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("user_account.id"))
+    gpt_application_id: Mapped[int] = mapped_column(
+        ForeignKey("custom_gpt_application.id")
+    )
 
     is_archived: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -88,8 +90,8 @@ class BaseVerificationRequest(Base):
     )
 
     @declared_attr
-    def user_account(cls):
-        return relationship("UserAccount")
+    def gpt_application(cls):
+        return relationship("CustomGPTApplication")
 
 
 class EmailVerificationRequest(BaseVerificationRequest):
@@ -134,7 +136,9 @@ class OAuthVerificationRequest(BaseVerificationRequest):
 class OAuthToken(Base):
     __tablename__ = "oauth_token"
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_account_id: Mapped[int] = mapped_column(ForeignKey("user_account.id"))
+    gpt_application_id: Mapped[int] = mapped_column(
+        ForeignKey("custom_gpt_application.id")
+    )
     access_token: Mapped[str] = mapped_column(String(255))
     refresh_token: Mapped[str] = mapped_column(String(255))
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
@@ -143,4 +147,18 @@ class OAuthToken(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+
+class UserSession(Base):
+    __tablename__ = "user_session"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    gpt_application_id: Mapped[int] = mapped_column(
+        ForeignKey("custom_gpt_application.id")
+    )
+    email: Mapped[str] = mapped_column(String(255), index=True)
+    name: Mapped[str] = mapped_column(Text(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow
     )

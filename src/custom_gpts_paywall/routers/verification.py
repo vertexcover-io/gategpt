@@ -6,7 +6,7 @@ from custom_gpts_paywall.config import EnvConfig
 
 from custom_gpts_paywall.dependencies import (
     ConfigDep,
-    UserDep,
+    GPTApplicationDep,
     DbSession,
     LoggerDep,
 )
@@ -41,7 +41,7 @@ class JSONMessageResponse(BaseModel):
 def create_verification_request(
     config: ConfigDep,
     create_verification_request: CreateVerificationRequest,
-    user: UserDep,
+    gpt_app: GPTApplicationDep,
     session: DbSession,
     bg_tasks: BackgroundTasks,
 ):
@@ -49,7 +49,7 @@ def create_verification_request(
     last_verification_request = (
         session.query(EmailVerificationRequest)
         .filter(
-            EmailVerificationRequest.user_id == user.id,
+            EmailVerificationRequest.gpt_application_id == gpt_app.id,
             EmailVerificationRequest.email == create_verification_request.email,
             (
                 EmailVerificationRequest.created_at
@@ -68,14 +68,14 @@ def create_verification_request(
         )
 
     verification_request = EmailVerificationRequest(
-        user_id=user.id,
+        gpt_application_id=gpt_app.id,
         otp=random.randint(10000000, 99999999),
         email=create_verification_request.email,
     )
     otp = verification_request.otp
     try:
         session.query(EmailVerificationRequest).filter(
-            EmailVerificationRequest.user_id == user.id,
+            EmailVerificationRequest.gpt_application_id == gpt_app.id,
             EmailVerificationRequest.email == create_verification_request.email,
         ).update({EmailVerificationRequest.archived_at: utcnow()})
         session.add(verification_request)
@@ -86,12 +86,16 @@ def create_verification_request(
     bg_tasks.add_task(
         send_verification_email,
         env_config=config,
-        user=user,
+        gpt_application=gpt_app,
         email=create_verification_request.email,
         otp=otp,
     )
-    print(f"OTP {otp} has been sent to user's {user.verification_medium.value}")
-    return {"message": f"OTP has been sent to user's {user.verification_medium.value}"}
+    print(
+        f"OTP {otp} has been sent to gpt_application's {gpt_app.verification_medium.value}"
+    )
+    return {
+        "message": f"OTP has been sent to gpt_application's {gpt_app.verification_medium.value}"
+    }
 
 
 class CreateOAuthVerificationRequest(BaseModel):
@@ -114,17 +118,17 @@ def start_oauth_verification(
     request: Request,
     config: ConfigDep,
     create_verification_request: CreateOAuthVerificationRequest,
-    user: UserDep,
+    gpt_app: GPTApplicationDep,
     session: DbSession,
 ):
-    if VerificationMedium.Google != user.verification_medium:
+    if VerificationMedium.Google != gpt_app.verification_medium:
         raise HTTPException(
             status_code=400,
-            detail="Custom GPT: {user.gpt_name} doesn't support oauth verification",
+            detail="Custom GPT: {gpt_application.gpt_name} doesn't support oauth verification",
         )
 
     oauth_verification_request = OAuthVerificationRequest(
-        user_id=user.id,
+        gpt_application_id=gpt_app.id,
         provider=create_verification_request.provider,
     )
     try:
@@ -162,18 +166,18 @@ def verify_otp(
     verify_request: VerifyOTPRequest,
     config: ConfigDep,
     session: DbSession,
-    user: UserDep,
+    gpt_application: GPTApplicationDep,
 ):
     now = utcnow()
     verification_request = (
         session.query(EmailVerificationRequest)
         .filter(
-            EmailVerificationRequest.user_id == user.id,
+            EmailVerificationRequest.gpt_application_id == gpt_application.id,
             EmailVerificationRequest.email == verify_request.email,
             EmailVerificationRequest.otp == verify_request.otp,
             EmailVerificationRequest.verified_at.is_(None),
             EmailVerificationRequest.archived_at.is_(None),
-            (EmailVerificationRequest.created_at + user.token_expiry) > now,
+            (EmailVerificationRequest.created_at + gpt_application.token_expiry) > now,
         )
         .first()
     )
@@ -206,7 +210,7 @@ class VerifyOAuthResponse(BaseModel):
     message: str
 
 
-async def _get_user_email_from_oauth(
+async def _get_gpt_application_email_from_oauth(
     verification_request_uuid: str,
     authorization_code: str,
     nonce: str,
@@ -222,14 +226,16 @@ async def _get_user_email_from_oauth(
         redirect_uri=redirect_uri,
     )
     if "id_token" in token:
-        userinfo = await oauth_client.parse_id_token(token, nonce=nonce)
-        email = userinfo["email"]
+        gpt_applicationinfo = await oauth_client.parse_id_token(token, nonce=nonce)
+        email = gpt_applicationinfo["email"]
         return email
     else:
         logger.error(
-            f"Unable to get user email from google oauth. Verification Request uuid: {verification_request_uuid}"
+            f"Unable to get gpt_application email from google oauth. Verification Request uuid: {verification_request_uuid}"
         )
-        raise Exception("Unable to get user email from google oauth. Please try again")
+        raise Exception(
+            "Unable to get gpt_application email from google oauth. Please try again"
+        )
 
 
 @verification_router.post("/verify-oauth", tags=["oauth_verification"])
@@ -238,14 +244,14 @@ async def verify_oauth(
     verify_request: VerifyOAuthRequest,
     config: ConfigDep,
     session: DbSession,
-    user: UserDep,
+    gpt_app: GPTApplicationDep,
     logger: LoggerDep,
 ):
     oauth_verification_request = (
         session.query(OAuthVerificationRequest)
         .filter(
             OAuthVerificationRequest.uuid == verify_request.verification_request_id,
-            OAuthVerificationRequest.user_id == user.id,
+            OAuthVerificationRequest.gpt_application_id == gpt_app.id,
         )
         .first()
     )
@@ -257,7 +263,7 @@ async def verify_oauth(
 
     now = utcnow()
     if (
-        oauth_verification_request.created_at + user.token_expiry < now
+        oauth_verification_request.created_at + gpt_app.token_expiry < now
         or oauth_verification_request.status
         in [
             OAuthVerificationRequestStatus.ARCHIVED,
@@ -287,13 +293,13 @@ async def verify_oauth(
             detail="Authorization code does not match",
         )
 
-    elif oauth_verification_request.created_at + user.token_expiry < now:
+    elif oauth_verification_request.created_at + gpt_app.token_expiry < now:
         raise HTTPException(
             status_code=400,
             detail="OAuth Verification Request has expired. Please start again",
         )
 
-    email = await _get_user_email_from_oauth(
+    email = await _get_gpt_application_email_from_oauth(
         authorization_code=oauth_verification_request.authorization_code,
         nonce=oauth_verification_request.nonce,
         verification_request_uuid=verify_request.verification_request_id,

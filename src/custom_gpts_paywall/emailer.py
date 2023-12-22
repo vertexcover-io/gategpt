@@ -1,5 +1,5 @@
 from custom_gpts_paywall.config import EnvConfig
-from custom_gpts_paywall.models import UserAccount
+from custom_gpts_paywall.models import CustomGPTApplication
 import boto3
 
 VERIFICATION_EMAIL_HTML_TEMPLATE = """
@@ -45,14 +45,18 @@ VERIFICATION_EMAIL_SUBJECT = "OTP Verification for Custom GPT: {custom_gpt}"
 
 
 def send_verification_email(
-    env_config: EnvConfig, user: UserAccount, email: str, otp: str
+    env_config: EnvConfig, gpt_application: CustomGPTApplication, email: str, otp: str
 ):
-    subject = VERIFICATION_EMAIL_SUBJECT.format(custom_gpt=user.gpt_name)
+    subject = VERIFICATION_EMAIL_SUBJECT.format(custom_gpt=gpt_application.gpt_name)
     html_content = VERIFICATION_EMAIL_HTML_TEMPLATE.format(
-        custom_gpt=user.gpt_name, otp=otp, custom_gpt_url=user.gpt_url
+        custom_gpt=gpt_application.gpt_name,
+        otp=otp,
+        custom_gpt_url=gpt_application.gpt_url,
     )
     text_content = VERIFICATION_EMAIL_TEXT_CONTENT.format(
-        custom_gpt=user.gpt_name, otp=otp, custom_gpt_url=user.gpt_url
+        custom_gpt=gpt_application.gpt_name,
+        otp=otp,
+        custom_gpt_url=gpt_application.gpt_url,
     )
     to_email = [{"email": email}]
     from_email = [{"email": env_config.email_from}]

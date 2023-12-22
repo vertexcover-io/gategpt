@@ -1,3 +1,5 @@
+from enum import Enum
+import logging
 import os
 from typing import Any, Callable, Optional
 from pydantic import BaseModel, Field, validator
@@ -14,7 +16,14 @@ DEFAULT_MIN_DELAY_BETWEEN_VERIFICATION = timedelta(seconds=20)
 SENDPOST_API_URL = "https://api.sendpost.io/api/v1/subaccount/email/"
 DEFAULT_EMAIL_FROM = "ritesh@vertexcover.io"
 GOOGLE_OAUTH_LOGIN_URL = "https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}&scope=email"
-DEFAULT_INSTRUCTION_PROMPT = "In order to use this customgpt, user needs to perform oauth authentication. Use the provided oauth configuration to perform authentication."
+DEFAULT_INSTRUCTION_PROMPT = "In order to use this customgpt, we first need to initiate user session and get user's name and email. Use the provided action to initiate user session."
+
+
+class OpenAPISchemaTags(Enum):
+    OpenAPI = "openapi"
+    Registration = "registration"
+    OAuth2Server = "oauth2_server"
+    UserSession = "user_session"
 
 
 class EnvConfig(BaseModel):
@@ -45,6 +54,10 @@ class EnvConfig(BaseModel):
     def url_scheme(self) -> str:
         return "https" if not self.debug else "http"
 
+    @property
+    def log_level(self) -> int:
+        return logging.DEBUG if self.debug else logging.INFO
+
     @validator("db_engine", pre=True, always=True)
     def set_db_engine(cls, v, values: dict[str, Any]) -> Engine:
         db_url = values.get("db_url", None)
@@ -61,7 +74,6 @@ class EnvConfig(BaseModel):
 
     @validator("google_oauth_client", pre=True, always=True)
     def set_google_oauth_client(cls, v, values: dict[str, Any]) -> StarletteOAuth2App:
-        print("Inside Validator")
         google_oauth_client_id = values.get("google_oauth_client_id", None)
         google_oauth_client_secret = values.get("google_oauth_client_secret", None)
         if not google_oauth_client_id or not google_oauth_client_secret:
@@ -80,7 +92,6 @@ class EnvConfig(BaseModel):
 @lru_cache()
 def create_config() -> EnvConfig:
     load_dotenv()
-    print("Loading envconfig")
     optional_kwargs = {}
     if os.getenv("INSTRUCTION_PROMPT"):
         optional_kwargs["instruction_prompt"] = os.getenv("INSTRUCTION_PROMPT")

@@ -34,7 +34,7 @@ async def google_oauth_login(
             == OAuthVerificationRequestStatus.NOT_STARTED,
         )
         .options(
-            joinedload(OAuthVerificationRequest.user_account),
+            joinedload(OAuthVerificationRequest.gpt_application),
         )
         .first()
     )
@@ -45,8 +45,8 @@ async def google_oauth_login(
             detail="Either Verification Link is invalid or has expired. Please try again.",
         )
 
-    user = verification_request.user_account
-    if verification_request.created_at + user.token_expiry < now:
+    gpt_application = verification_request.gpt_application
+    if verification_request.created_at + gpt_application.token_expiry < now:
         session.query(OAuthVerificationRequest).filter(
             OAuthVerificationRequest.id == verification_request.id,
         ).update(
@@ -130,7 +130,7 @@ def _verify_oauth_verification_request(
     now = utcnow()
     verification_request = (
         session.query(OAuthVerificationRequest)
-        .options(joinedload(OAuthVerificationRequest.user_account))
+        .options(joinedload(OAuthVerificationRequest.gpt_application))
         .filter(
             OAuthVerificationRequest.uuid == verification_request_uuid,
         )
@@ -145,8 +145,8 @@ def _verify_oauth_verification_request(
             "server_error",
             "Google Authentication Failed. Please try again",
         )
-    user = verification_request.user_account
-    if verification_request.created_at + user.token_expiry < now:
+    gpt_application = verification_request.gpt_application
+    if verification_request.created_at + gpt_application.token_expiry < now:
         logger.warn(
             f"Google Authentication Request Expired. Verification Request UUId: {verification_request_uuid}"
         )

@@ -5,7 +5,7 @@ from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 from custom_gpts_paywall.config import EnvConfig, create_config
-from custom_gpts_paywall.models import OAuthToken, UserAccount
+from custom_gpts_paywall.models import OAuthToken, CustomGPTApplication
 from custom_gpts_paywall.utils import utcnow
 
 config = create_config()
@@ -31,16 +31,16 @@ DbSession = Annotated[Session, Depends(db_session)]
 bearer_token_security = HTTPBearer(scheme_name="API Key")
 
 
-def user_account_auth(
+def gpt_application_auth(
     db: DbSession,
     config: ConfigDep,
     credentials: Annotated[
         HTTPAuthorizationCredentials, Depends(bearer_token_security)
     ],
-) -> UserAccount:
+) -> CustomGPTApplication:
     access_token = credentials.credentials
-    user = (
-        db.query(UserAccount)
+    gpt_application_auth = (
+        db.query(CustomGPTApplication)
         .join(OAuthToken)
         .filter(
             OAuthToken.access_token == access_token,
@@ -48,14 +48,14 @@ def user_account_auth(
         )
         .first()
     )
-    if user:
-        return user
+    if gpt_application_auth:
+        return gpt_application_auth
     elif access_token == config.api_key:
         return None
     raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
 
-UserDep = Annotated[UserAccount, Depends(user_account_auth)]
+GPTApplicationDep = Annotated[CustomGPTApplication, Depends(gpt_application_auth)]
 
 
 def get_logger() -> Logger:

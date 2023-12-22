@@ -44,7 +44,8 @@ async def privacy_policy():
 
 
 @root_router.get("/", include_in_schema=False, response_class=JSONResponse)
-def root():
+def root(logger: LoggerDep):
+    logger.info("Root endpoint hit")
     return {"status": "ok"}
 
 

@@ -15,7 +15,7 @@ from custom_gpts_paywall.models import (
     OAuthToken,
     OAuthVerificationRequest,
     OAuthVerificationRequestStatus,
-    UserAccount,
+    CustomGPTApplication,
 )
 from custom_gpts_paywall.utils import url_for, utcnow
 
@@ -48,12 +48,12 @@ async def oauth2_authorize(
     except ValidationError as e:
         raise RequestValidationError(errors=e.errors())
 
-    user_account = (
-        session.query(UserAccount)
-        .filter(UserAccount.client_id == params.client_id)
+    gpt_application = (
+        session.query(CustomGPTApplication)
+        .filter(CustomGPTApplication.client_id == params.client_id)
         .first()
     )
-    if not user_account:
+    if not gpt_application:
         raise HTTPException(
             status_code=401,
             detail="Invalid client_id",
@@ -69,7 +69,7 @@ async def oauth2_authorize(
 
     oauth_verification_request = OAuthVerificationRequest(
         provider="google",
-        user_id=user_account.id,
+        gpt_application_id=gpt_application.id,
         state=params.state,
         redirect_uri=str(params.redirect_uri),
         status=OAuthVerificationRequestStatus.IN_PROGRESS,
@@ -102,21 +102,21 @@ def verify_credentials(
 ):
     client_id = credentials.username
     client_secret = credentials.password
-    user_account = (
-        session.query(UserAccount)
+    gpt_application = (
+        session.query(CustomGPTApplication)
         .filter(
-            UserAccount.client_id == client_id,
-            UserAccount.client_secret == client_secret,
+            CustomGPTApplication.client_id == client_id,
+            CustomGPTApplication.client_secret == client_secret,
         )
         .first()
     )
-    if not user_account:
+    if not gpt_application:
         raise HTTPException(
             status_code=401,
             detail="Invalid client_id or client_secret",
         )
 
-    return user_account
+    return gpt_application
 
 
 async def _fetch_access_token(
@@ -154,7 +154,7 @@ async def _fetch_user_email(
 @oauth2_router.post("/token", response_class=JSONResponse)
 async def oauth2_token(
     request: Request,
-    user_account: Annotated[UserAccount, Depends(verify_credentials)],
+    gpt_application: Annotated[CustomGPTApplication, Depends(verify_credentials)],
     session: DbSession,
     config: ConfigDep,
     grant_type: Annotated[str, Form()],
@@ -172,9 +172,9 @@ async def oauth2_token(
         .filter(
             OAuthVerificationRequest.uuid == code,
             OAuthVerificationRequest.redirect_uri == redirect_uri,
-            OAuthVerificationRequest.user_id == user_account.id,
+            OAuthVerificationRequest.gpt_application_id == gpt_application.id,
         )
-        .options(joinedload(OAuthVerificationRequest.user_account))
+        .options(joinedload(OAuthVerificationRequest.gpt_application))
         .first()
     )
     if not oauth_verification_request:
@@ -185,7 +185,7 @@ async def oauth2_token(
 
     now = utcnow()
     if (
-        oauth_verification_request.created_at + user_account.token_expiry < now
+        oauth_verification_request.created_at + gpt_application.token_expiry < now
         or oauth_verification_request.status
         != OAuthVerificationRequestStatus.CALLBACK_COMPLETED
     ):
@@ -210,9 +210,9 @@ async def oauth2_token(
     oauth_verification_request.verified_at = utcnow()
     oauth_verification_request.email = email
     session.add(oauth_verification_request)
-    if user_account.store_tokens:
+    if gpt_application.store_tokens:
         oauth_token = OAuthToken(
-            user_account_id=user_account.id,
+            gpt_application_id=gpt_application.id,
             access_token=token["access_token"],
             refresh_token=token["refresh_token"],
             expires_at=datetime.utcfromtimestamp(token["expires_at"]).replace(
@@ -220,6 +220,6 @@ async def oauth2_token(
             ),
         )
         session.add(oauth_token)
-
     session.commit()
+    token["gpt_application_id"] = gpt_application.uuid
     return token

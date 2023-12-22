@@ -1,12 +1,25 @@
+import logging
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
-from custom_gpts_paywall.config import create_config
+from custom_gpts_paywall.config import EnvConfig, OpenAPISchemaTags, create_config
 from custom_gpts_paywall.routers.root import root_router
 from custom_gpts_paywall.routers.openapi_schema import openapi_schema_router
 from custom_gpts_paywall.routers.google_oauth import google_oauth_router
 from custom_gpts_paywall.routers.verification import verification_router
-from custom_gpts_paywall.routers.user_account import user_account_router
+from custom_gpts_paywall.routers.gpt_application import gpt_application_router
 from custom_gpts_paywall.routers.oauth2_server import oauth2_router
+from custom_gpts_paywall.routers.user_session import user_session_router
+
+
+def confugure_logging(config: EnvConfig):
+    logging.basicConfig(
+        level=config.log_level,
+        format="[%(asctime)s]  %(levelname)s: [%(filename)s:%(lineno)d]  %(message)s",
+    )
+
+
+def perform_setup(config: EnvConfig):
+    confugure_logging(config)
 
 
 def create_app() -> FastAPI:
@@ -28,12 +41,12 @@ def create_app() -> FastAPI:
             },
         ],
     )
-
+    perform_setup(config)
     app.add_middleware(SessionMiddleware, secret_key=config.secret_key)
     app.include_router(root_router)
     app.include_router(
         openapi_schema_router,
-        tags=["openapi"],
+        tags=[OpenAPISchemaTags.OpenAPI],
         prefix="/openapi",
     )
     app.include_router(
@@ -48,14 +61,20 @@ def create_app() -> FastAPI:
         prefix="/api/v1",
     )
     app.include_router(
-        user_account_router,
-        tags=["admin"],
+        gpt_application_router,
+        tags=[OpenAPISchemaTags.Registration],
+    )
+
+    app.include_router(
+        user_session_router,
+        prefix="/api/v1",
+        tags=[OpenAPISchemaTags.UserSession],
     )
 
     app.include_router(
         oauth2_router,
         prefix="/oauth2",
-        tags=["oauth2_server"],
+        tags=[OpenAPISchemaTags.OAuth2Server],
     )
-
+    logging.info("App created")
     return app
