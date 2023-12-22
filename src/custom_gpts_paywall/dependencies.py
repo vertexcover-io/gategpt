@@ -33,12 +33,12 @@ bearer_token_security = HTTPBearer(scheme_name="API Key")
 
 def user_account_auth(
     db: DbSession,
+    config: ConfigDep,
     credentials: Annotated[
         HTTPAuthorizationCredentials, Depends(bearer_token_security)
     ],
 ) -> UserAccount:
     access_token = credentials.credentials
-    print("Access token: ", access_token)
     user = (
         db.query(UserAccount)
         .join(OAuthToken)
@@ -50,6 +50,8 @@ def user_account_auth(
     )
     if user:
         return user
+    elif access_token == config.api_key:
+        return None
     raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
 

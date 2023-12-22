@@ -37,7 +37,7 @@ class AuthorizationRequestParams(BaseModel):
         return v
 
 
-@oauth2_router.get("/oauth2/authorize")
+@oauth2_router.get("/authorize")
 async def oauth2_authorize(
     request: Request,
     config: ConfigDep,
@@ -151,7 +151,7 @@ async def _fetch_user_email(
         raise Exception("Unable to get user email from google oauth. Please try again")
 
 
-@oauth2_router.post("/oauth2/token", response_class=JSONResponse)
+@oauth2_router.post("/token", response_class=JSONResponse)
 async def oauth2_token(
     request: Request,
     user_account: Annotated[UserAccount, Depends(verify_credentials)],

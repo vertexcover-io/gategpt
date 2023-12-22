@@ -14,6 +14,7 @@ DEFAULT_MIN_DELAY_BETWEEN_VERIFICATION = timedelta(seconds=20)
 SENDPOST_API_URL = "https://api.sendpost.io/api/v1/subaccount/email/"
 DEFAULT_EMAIL_FROM = "ritesh@vertexcover.io"
 GOOGLE_OAUTH_LOGIN_URL = "https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}&scope=email"
+DEFAULT_INSTRUCTION_PROMPT = "In order to use this customgpt, user needs to perform oauth authentication. Use the provided oauth configuration to perform authentication."
 
 
 class EnvConfig(BaseModel):
@@ -28,8 +29,7 @@ class EnvConfig(BaseModel):
     aws_region: str
     aws_access_key_id: str
     aws_secret_access_key: str
-    email_verification_prompt: str
-    oauth_verification_prompt: str
+    instruction_prompt: str = Field(default=DEFAULT_INSTRUCTION_PROMPT)
     domain_url: str = Field(default="http://localhost:8000")
     google_oauth_client_id: str
     google_oauth_client_secret: str
@@ -82,6 +82,8 @@ def create_config() -> EnvConfig:
     load_dotenv()
     print("Loading envconfig")
     optional_kwargs = {}
+    if os.getenv("INSTRUCTION_PROMPT"):
+        optional_kwargs["instruction_prompt"] = os.getenv("INSTRUCTION_PROMPT")
     if os.getenv("OAUTH_REDIRECT_URI_HOST"):
         optional_kwargs["oauth_redirect_uri_host"] = os.getenv(
             "OAUTH_REDIRECT_URI_HOST"
@@ -101,8 +103,6 @@ def create_config() -> EnvConfig:
         aws_region=os.getenv("AWS_REGION"),
         aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
         aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-        oauth_verification_prompt=os.getenv("OAUTH_VERIFICATION_PROMPT"),
-        email_verification_prompt=os.getenv("AUTH_PROMPT"),
         domain_url=os.getenv("DOMAIN_NAME"),
         google_oauth_client_id=os.getenv("GOOGLE_OAUTH_CLIENT_ID"),
         google_oauth_client_secret=os.getenv("GOOGLE_OAUTH_CLIENT_SECRET"),

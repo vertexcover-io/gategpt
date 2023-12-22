@@ -38,12 +38,13 @@ def create_app() -> FastAPI:
     )
     app.include_router(
         google_oauth_router,
-        tags=["oauth"],
+        include_in_schema=False,
         prefix="/oauth",
     )
 
     app.include_router(
         verification_router,
+        include_in_schema=False,
         prefix="/api/v1",
     )
     app.include_router(
@@ -53,6 +54,8 @@ def create_app() -> FastAPI:
 
     app.include_router(
         oauth2_router,
+        prefix="/oauth2",
+        tags=["oauth2_server"],
     )
 
     return app

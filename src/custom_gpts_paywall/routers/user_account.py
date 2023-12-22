@@ -1,7 +1,7 @@
 from datetime import timedelta
-from typing import Optional
+from typing import Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, HttpUrl
 from sqlalchemy.exc import IntegrityError
 from custom_gpts_paywall.config import DEFAULT_VERIFICATION_EXPIRY
 from custom_gpts_paywall.dependencies import (
@@ -25,15 +25,24 @@ class UserCreateRequest(BaseModel):
     verification_medium: VerificationMedium
     gpt_description: Optional[str] = Field(default=None)
     token_expiry: timedelta = Field(default=DEFAULT_VERIFICATION_EXPIRY)
+    store_tokens: bool = Field(default=False, exclude=True)
+
+
+class AuthenticationDetails(BaseModel):
+    client_id: str
+    client_secret: str
+    authorization_url: HttpUrl
+    token_url: HttpUrl
+    scope: Literal["email"] = Field(default="email")
+    authentication_type: Literal["OAuth"] = Field(default="OAuth")
+    token_exchange_message: Literal["Basic Auth"] = Field(default="Basic Auth")
 
 
 class UserCreateResponse(UserCreateRequest):
     uuid: str
-    action_schema_url: str
     privacy_policy_url: str
     prompt: str
-    client_id: str
-    client_secret: str
+    authentication_details: AuthenticationDetails
 
 
 @user_account_router.post(
@@ -59,37 +68,37 @@ def register_custom_gpt(
         gpt_url=user_req.gpt_url,
         verification_medium=user_req.verification_medium,
         token_expiry=user_req.token_expiry,
+        store_tokens=user_req.store_tokens,
     )
     try:
         session.add(user)
+        session.flush()
+        auth_details = AuthenticationDetails(
+            client_id=str(user.client_id),
+            client_secret=str(user.client_secret),
+            authorization_url=url_for(request, "oauth2_authorize"),
+            token_url=url_for(request, "oauth2_token"),
+        )
+
+        user_resp = UserCreateResponse(
+            name=user.name,
+            gpt_name=user.gpt_name,
+            gpt_url=user.gpt_url,
+            email=user.email,
+            verification_medium=user.verification_medium,
+            gpt_description=user.gpt_description,
+            token_expiry=user.token_expiry,
+            uuid=user.uuid,
+            prompt=config.instruction_prompt,
+            privacy_policy_url=url_for(request, "privacy_policy"),
+            authentication_details=auth_details,
+        )
         session.commit()
+        return user_resp
     except IntegrityError as ex:
-        logger.error(f"Failed to create user: {ex}")
+        logger.error(f"Failed to create user: {ex}", exc_info=True)
         session.rollback()
         raise HTTPException(
-            status_code=409, detail=f"User with email {user_req.email} already exists"
+            status_code=409,
+            detail=f"An account for gpt_url {user_req.gpt_url} already exists",
         )
-    session.refresh(user)
-    tags = (
-        "email_verification"
-        if user.verification_medium == "email"
-        else "oauth_verification"
-    )
-
-    return UserCreateResponse(
-        name=user.name,
-        gpt_name=user.gpt_name,
-        gpt_url=user.gpt_url,
-        email=user.email,
-        verification_medium=user.verification_medium,
-        gpt_description=user.gpt_description,
-        token_expiry=user.token_expiry,
-        uuid=user.uuid,
-        action_schema_url=f"{config.domain_url}{url_for(request, 'openapi_schema_by_tags', query_params={'tags': tags})}",
-        prompt=config.email_verification_prompt
-        if user_req.verification_medium == "email"
-        else config.oauth_verification_prompt,
-        privacy_policy_url=url_for(request, "privacy_policy"),
-        client_id=str(user.client_id),
-        client_secret=str(user.client_secret),
-    )
