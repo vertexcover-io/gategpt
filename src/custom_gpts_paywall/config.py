@@ -42,10 +42,10 @@ class EnvConfig(BaseModel):
     session_local: Callable[[], Session] = Field(default=None)
     google_oauth_client: StarletteOAuth2App = Field(default=None)
     oauth_redirect_uri_host: str = Field(default="chat.openai.com")
-    aws_region: Optional[str]
-    aws_access_key_id: Optional[str]
-    aws_secret_access_key: Optional[str]
-    sendx_api_key: Optional[str]
+    aws_region: Optional[str] = None
+    aws_access_key_id: Optional[str] = None
+    aws_secret_access_key: Optional[str] = None
+    sendx_api_key: Optional[str] = None
 
     class Config:
         arbitrary_types_allowed = True
