@@ -32,12 +32,8 @@ class EnvConfig(BaseModel):
     secret_key: str
     port: int = Field(default=8000)
     api_key: str
-    sendx_api_key: Optional[str]
     min_delay_between_verification: timedelta
     email_from: str
-    aws_region: str
-    aws_access_key_id: str
-    aws_secret_access_key: str
     instruction_prompt: str = Field(default=DEFAULT_INSTRUCTION_PROMPT)
     domain_url: str = Field(default="http://localhost:8000")
     google_oauth_client_id: str
@@ -46,6 +42,10 @@ class EnvConfig(BaseModel):
     session_local: Callable[[], Session] = Field(default=None)
     google_oauth_client: StarletteOAuth2App = Field(default=None)
     oauth_redirect_uri_host: str = Field(default="chat.openai.com")
+    aws_region: Optional[str]
+    aws_access_key_id: Optional[str]
+    aws_secret_access_key: Optional[str]
+    sendx_api_key: Optional[str]
 
     class Config:
         arbitrary_types_allowed = True
@@ -106,14 +106,10 @@ def create_config() -> EnvConfig:
         secret_key=os.getenv("SECRET_KEY"),
         port=os.getenv("PORT", 8000),
         api_key=os.getenv("API_KEY"),
-        sendx_api_key=os.getenv("SENDX_API_KEY"),
         min_delay_between_verification=os.getenv(
             "MIN_DELAY_BETWEEN_VERIFICATION", DEFAULT_MIN_DELAY_BETWEEN_VERIFICATION
         ),
         email_from=os.getenv("EMAIL_FROM", DEFAULT_EMAIL_FROM),
-        aws_region=os.getenv("AWS_REGION"),
-        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
         domain_url=os.getenv("DOMAIN_NAME"),
         google_oauth_client_id=os.getenv("GOOGLE_OAUTH_CLIENT_ID"),
         google_oauth_client_secret=os.getenv("GOOGLE_OAUTH_CLIENT_SECRET"),
