@@ -18,7 +18,6 @@ from enum import Enum
 import shortuuid
 from uuid import uuid4, UUID
 
-from sqlalchemy.sql import expression
 from custom_gpts_paywall.config import DEFAULT_VERIFICATION_EXPIRY
 from custom_gpts_paywall.utils import utcnow
 
@@ -36,21 +35,34 @@ class VerificationMedium(Enum):
         return self.value
 
 
-class CustomGPTApplication(Base):
-    __tablename__ = "custom_gpt_application"
+class User(Base):
+    __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     uuid: Mapped[str] = mapped_column(String(22), default=shortuuid.uuid)
     name: Mapped[str] = mapped_column(String(30))
+    email: Mapped[str] = mapped_column(String(255), unique=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+
+class CustomGPTApplication(Base):
+    __tablename__ = "custom_gpt_application"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    uuid: Mapped[str] = mapped_column(String(22), default=shortuuid.uuid)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    user: Mapped[User] = relationship("User", backref="custom_gpt_applications")
     gpt_name: Mapped[str] = mapped_column(String(30))
     gpt_description: Mapped[str] = mapped_column(Text(), nullable=True)
     gpt_url: Mapped[str] = mapped_column(Text(), unique=True)
-    email: Mapped[str] = mapped_column(String(255))
+
     verification_medium: Mapped[VerificationMedium] = mapped_column(
-        EnumColumn(VerificationMedium, native_enum=False)
-    )
-    store_tokens: Mapped[bool] = mapped_column(
-        Boolean, server_default=expression.false(), default=False
+        EnumColumn(VerificationMedium, native_enum=False),
+        default=VerificationMedium.Google,
     )
     token_expiry: Mapped[timedelta] = mapped_column(
         Interval, default=func.interval(DEFAULT_VERIFICATION_EXPIRY.microseconds)
@@ -150,8 +162,8 @@ class OAuthToken(Base):
     )
 
 
-class UserSession(Base):
-    __tablename__ = "user_session"
+class GPTAppSession(Base):
+    __tablename__ = "gpt_session"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     gpt_application_id: Mapped[int] = mapped_column(

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -5,10 +6,10 @@ import httpx
 from pydantic import BaseModel
 from authlib.integrations.httpx_client import OAuth2Client
 from custom_gpts_paywall.dependencies import DbSession, LoggerDep
-from custom_gpts_paywall.models import CustomGPTApplication, UserSession
+from custom_gpts_paywall.models import CustomGPTApplication, GPTAppSession
 
 
-user_session_router = APIRouter()
+gpt_app_session_router = APIRouter()
 
 
 class CreateSessionRequest(BaseModel):
@@ -24,7 +25,14 @@ class CreateSessionResponse(BaseModel):
 bearer_token_security = HTTPBearer(scheme_name="API Key")
 
 
-@user_session_router.post("/session", response_model=CreateSessionResponse)
+class GPTAppSessionResponse(BaseModel):
+    gpt_application_id: str
+    email: str
+    name: str
+    created_at: datetime
+
+
+@gpt_app_session_router.post("/session", response_model=CreateSessionResponse)
 def create_session(
     session: DbSession,
     create_session_request: CreateSessionRequest,
@@ -67,14 +75,11 @@ def create_session(
 
     # Parse the response to get user information
     user_info = response.json()
-    user_session = UserSession(
+    gpt_session = GPTAppSession(
         gpt_application_id=gpt_application.id,
         email=user_info["email"],
         name=user_info["name"],
     )
-    session.add(user_session)
+    session.add(gpt_session)
     session.commit()
-    return {
-        "email": user_info["email"],
-        "name": user_info["name"],
-    }
+    return gpt_session

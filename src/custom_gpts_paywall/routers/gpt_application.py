@@ -17,6 +17,11 @@ from custom_gpts_paywall.utils import url_for
 gpt_application_router = APIRouter()
 
 
+@gpt_application_router.get("/gpt-application")
+async def gpt_application_registration():
+    pass
+
+
 class RegisterGPTApplicationRequest(BaseModel):
     name: str
     gpt_name: str
