@@ -4,11 +4,11 @@ from starlette.middleware.sessions import SessionMiddleware
 from custom_gpts_paywall.config import EnvConfig, OpenAPISchemaTags, create_config
 from custom_gpts_paywall.routers.root import root_router
 from custom_gpts_paywall.routers.openapi_schema import openapi_schema_router
-from custom_gpts_paywall.routers.google_oauth import google_oauth_router
 from custom_gpts_paywall.routers.verification import verification_router
 from custom_gpts_paywall.routers.gpt_application import gpt_application_router
 from custom_gpts_paywall.routers.oauth2_server import oauth2_router
 from custom_gpts_paywall.routers.user_session import user_session_router
+from custom_gpts_paywall.routers.auth import auth_router
 
 
 def confugure_logging(config: EnvConfig):
@@ -49,11 +49,6 @@ def create_app() -> FastAPI:
         tags=[OpenAPISchemaTags.OpenAPI],
         prefix="/openapi",
     )
-    app.include_router(
-        google_oauth_router,
-        include_in_schema=False,
-        prefix="/oauth",
-    )
 
     app.include_router(
         verification_router,
@@ -62,7 +57,7 @@ def create_app() -> FastAPI:
     )
     app.include_router(
         gpt_application_router,
-        tags=[OpenAPISchemaTags.Registration],
+        tags=[OpenAPISchemaTags.GPTAppRegistration],
     )
 
     app.include_router(
@@ -76,5 +71,8 @@ def create_app() -> FastAPI:
         prefix="/oauth2",
         tags=[OpenAPISchemaTags.OAuth2Server],
     )
+
+    app.include_router(auth_router, tags=[OpenAPISchemaTags.Auth])
+
     logging.info("App created")
     return app

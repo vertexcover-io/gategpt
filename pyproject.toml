@@ -20,6 +20,7 @@ dependencies = [
     "httpx>=0.25.2",
     "itsdangerous>=2.1.2",
     "python-multipart>=0.0.6",
+    "python-jose[cryptography]>=3.3.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
