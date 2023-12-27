@@ -1,9 +1,8 @@
 from datetime import timedelta
 from authlib.integrations.base_client import OAuthError
 from authlib.jose.rfc7519 import jwt
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse
-from httpx import Request
 from sqlalchemy import insert
 from custom_gpts_paywall.config import JWT_ENCODE_ALGORITHM
 
