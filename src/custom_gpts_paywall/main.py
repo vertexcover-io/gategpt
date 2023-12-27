@@ -7,7 +7,7 @@ from custom_gpts_paywall.routers.openapi_schema import openapi_schema_router
 from custom_gpts_paywall.routers.verification import verification_router
 from custom_gpts_paywall.routers.gpt_application import gpt_application_router
 from custom_gpts_paywall.routers.oauth2_server import oauth2_router
-from custom_gpts_paywall.routers.user_session import user_session_router
+from custom_gpts_paywall.routers.gpt_app_session import gpt_app_session_router
 from custom_gpts_paywall.routers.auth import auth_router
 
 
@@ -61,7 +61,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(
-        user_session_router,
+        gpt_app_session_router,
         prefix="/api/v1",
         tags=[OpenAPISchemaTags.UserSession],
     )
