@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from sqlalchemy import text
 
 from custom_gpts_paywall.dependencies import DbSession, LoggerDep
+from custom_gpts_paywall.routers.auth import get_current_user
+
 
 root_router = APIRouter()
 
@@ -43,10 +45,11 @@ async def privacy_policy():
     """
 
 
-@root_router.get("/", include_in_schema=False, response_class=JSONResponse)
-def root(logger: LoggerDep):
+@root_router.get("/", include_in_schema=False, response_class=FileResponse)
+def root(logger: LoggerDep, current_user: dict = Depends(get_current_user)):
     logger.info("Root endpoint hit")
-    return {"status": "ok"}
+    # return {"status": "ok"}
+    return "templates/home.html"
 
 
 @root_router.get(
