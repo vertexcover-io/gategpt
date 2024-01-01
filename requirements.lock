@@ -31,7 +31,7 @@ itsdangerous==2.1.2
 jmespath==1.0.1
 mako==1.3.0
 markupsafe==2.1.3
-psycopg2==2.9.9
+psycopg2-binary==2.9.9
 pycparser==2.21
 pydantic==2.5.1
 pydantic-core==2.14.3
