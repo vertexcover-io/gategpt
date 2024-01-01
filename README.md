@@ -18,7 +18,7 @@ This project utilizes the [Rye package manager](https://github.com/ryelabs/rye) 
 2. Install project dependencies using Rye:
 
    ```bash
-   rye run install
+   rye sync
    ```
 
 3. Create a copy of the environment variable template file:
