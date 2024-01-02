@@ -1,7 +1,11 @@
 from datetime import timedelta
+from datetime import datetime
+from fastapi import status
 from typing import Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, EmailStr, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl
+from sqlalchemy.sql import and_
+import shortuuid
 from sqlalchemy.exc import IntegrityError
 from custom_gpts_paywall.config import DEFAULT_VERIFICATION_EXPIRY
 from custom_gpts_paywall.dependencies import (
@@ -10,11 +14,17 @@ from custom_gpts_paywall.dependencies import (
     LoggerDep,
     gpt_application_auth,
 )
-from custom_gpts_paywall.models import CustomGPTApplication, VerificationMedium
+from uuid import UUID, uuid4
+from starlette.responses import Response
+from custom_gpts_paywall.models import (
+    CustomGPTApplication,
+    UserSession,
+    VerificationMedium,
+)
 from custom_gpts_paywall.utils import url_for
 
 
-gpt_application_router = APIRouter()
+gpt_application_router = APIRouter(prefix="/custom-gpt-application")
 
 
 class RegisterGPTApplicationRequest(BaseModel):
@@ -26,6 +36,25 @@ class RegisterGPTApplicationRequest(BaseModel):
     gpt_description: Optional[str] = Field(default=None)
     token_expiry: timedelta = Field(default=DEFAULT_VERIFICATION_EXPIRY)
     store_tokens: bool = Field(default=False, exclude=True)
+
+
+class CustomGPTApplicationModel(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    uuid: str = Field(default_factory=shortuuid.uuid)
+    name: str
+    gpt_name: str
+    gpt_description: Optional[str]
+    gpt_url: str
+    email: EmailStr
+    verification_medium: VerificationMedium
+    store_tokens: bool = False
+    token_expiry: timedelta
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    client_id: UUID = Field(default_factory=uuid4)
+    client_secret: UUID = Field(default_factory=uuid4)
 
 
 class AuthenticationDetails(BaseModel):
@@ -46,9 +75,25 @@ class RegisterGPTApplicationResponse(RegisterGPTApplicationRequest):
     authentication_details: AuthenticationDetails
 
 
+class UserSessionResponseModel(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    gpt_application_id: int
+    email: str
+    name: str
+    created_at: datetime
+
+
+class UserSessionQueryModel(BaseModel):
+    email: str = ""
+    name: str = ""
+    start_datetime: datetime | None = None
+    end_datetime: datetime | None = None
+
+
 @gpt_application_router.post(
     name="register_custom_gpt",
-    path="/api/v1/custom-gpt-application",
+    path="",
     status_code=201,
     response_model=RegisterGPTApplicationResponse,
 )
@@ -106,3 +151,62 @@ def register_custom_gpt(
             status_code=409,
             detail=f"An account for gpt_url {req.gpt_url} already exists",
         )
+
+
+@gpt_application_router.get(
+    "/{uu_id}/user-sessions/",
+    response_model=list[UserSessionResponseModel],
+)
+def gpt_app_user_stat(
+    uu_id: str,
+    session: DbSession,
+    logger: LoggerDep,
+    query_params: UserSessionQueryModel = Depends(),
+):
+    user_sessions_query = (
+        session.query(UserSession)
+        .join(CustomGPTApplication)
+        .filter(CustomGPTApplication.uuid == uu_id)
+    )
+
+    if query_params.name:
+        user_sessions_query = user_sessions_query.filter(
+            UserSession.name == query_params.name
+        )
+    if query_params.email:
+        user_sessions_query = user_sessions_query.filter(
+            UserSession.email == query_params.email
+        )
+    if query_params.start_datetime and query_params.end_datetime:
+        user_sessions_query = user_sessions_query.filter(
+            and_(
+                UserSession.created_at >= query_params.start_datetime,
+                UserSession.created_at <= query_params.end_datetime,
+            )
+        )
+    elif query_params.start_datetime:
+        user_sessions_query = user_sessions_query.filter(
+            UserSession.created_at >= query_params.start_datetime,
+        )
+    elif query_params.end_datetime:
+        user_sessions_query = user_sessions_query.filter(
+            UserSession.created_at <= query_params.end_datetime,
+        )
+
+    user_sessions = user_sessions_query.all()
+
+    if not user_sessions:
+        logger.info(f"No user sessions found for GPT app with uuid {uu_id}")
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+
+    return [UserSessionResponseModel.model_validate(i) for i in user_sessions]
+
+
+# for testing
+@gpt_application_router.get(
+    "",
+    response_model=list[CustomGPTApplicationModel],
+)
+def gpt_applications(session: DbSession, logger: LoggerDep):
+    gpt_apps = session.query(CustomGPTApplication).all()
+    return [CustomGPTApplicationModel.model_validate(i) for i in gpt_apps]

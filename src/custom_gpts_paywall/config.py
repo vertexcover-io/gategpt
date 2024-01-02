@@ -24,6 +24,7 @@ class OpenAPISchemaTags(Enum):
     Registration = "registration"
     OAuth2Server = "oauth2_server"
     UserSession = "user_session"
+    CustomGptApplication = "custom_gpt_application"
 
 
 class EnvConfig(BaseModel):
