@@ -1,26 +1,21 @@
-from datetime import timedelta
 from authlib.integrations.base_client import OAuthError
+
 # from authlib.jose.rfc7519 import jwt
 from fastapi import APIRouter, Request
-from fastapi.responses import RedirectResponse, FileResponse, HTMLResponse
-from sqlalchemy import insert
+from fastapi.responses import RedirectResponse, HTMLResponse
 from custom_gpts_paywall.config import JWT_ENCODE_ALGORITHM
-import os
 from custom_gpts_paywall.dependencies import ConfigDep, DbSession, LoggerDep
 from custom_gpts_paywall.models import User
 from custom_gpts_paywall.utils import url_for, utcnow
 
-from fastapi import FastAPI, Depends, HTTPException, Request, Response, Cookie
-from sqlalchemy.exc import IntegrityError
+from fastapi import Depends, Cookie
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from authlib.jose import JsonWebToken
 from datetime import timedelta
 
 import jwt
-from authlib.jose import JsonWebToken
 from authlib.jose.errors import DecodeError
 from fastapi.exceptions import HTTPException
-from fastapi import Cookie
+
 from sqlalchemy.orm import joinedload
 
 from fastapi.templating import Jinja2Templates
@@ -29,10 +24,10 @@ auth_router = APIRouter()
 
 templates = Jinja2Templates(directory="templates")
 
+
 @auth_router.get("/login", name="login_page", response_class=HTMLResponse)
 def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
-
 
 
 @auth_router.get("/login/failed", response_class=HTMLResponse)
@@ -52,12 +47,18 @@ async def oauth_login(config: ConfigDep, request: Request):
         access_type="offline",
     )
 
+
 def create_jwt_token(user_email: str, secret_key: str, expires_in: timedelta):
     payload = {"exp": utcnow() + expires_in, "iat": utcnow(), "sub": user_email}
-    return jwt.encode(payload, secret_key, algorithm = JWT_ENCODE_ALGORITHM)
+    return jwt.encode(payload, secret_key, algorithm=JWT_ENCODE_ALGORITHM)
 
 
-def get_current_user(config: ConfigDep, logger: LoggerDep, session: DbSession, jwt_token: str = Cookie(None)):
+def get_current_user(
+    config: ConfigDep,
+    logger: LoggerDep,
+    session: DbSession,
+    jwt_token: str = Cookie(None),
+):
     credentials_exception = HTTPException(
         status_code=401,
         detail="Not authorized :(",
@@ -65,33 +66,34 @@ def get_current_user(config: ConfigDep, logger: LoggerDep, session: DbSession, j
     )
 
     if jwt_token:
-        secret_key_bytes = config.secret_key.encode('utf-8')
+        secret_key_bytes = config.secret_key.encode("utf-8")
 
         try:
-            payload = jwt.decode(jwt_token, secret_key_bytes, algorithms = JWT_ENCODE_ALGORITHM)
+            payload = jwt.decode(
+                jwt_token, secret_key_bytes, algorithms=JWT_ENCODE_ALGORITHM
+            )
             user_email = payload.get("sub")
-            
+
             if user_email:
-                user = session.query(User).options(joinedload(User.custom_gpt_applications)).filter_by(email=user_email).first()
-                if user:
-                    # logger.info(user.custom_gpt_applications)
-                    payload["gpt_applications"] = user.custom_gpt_applications
-                else:
-                    raise HTTPException(status_code=401, detail="Invalid user")
+                user = (
+                    session.query(User)
+                    .options(joinedload(User.custom_gpt_applications))
+                    .filter_by(email=user_email)
+                    .first()
+                )
             else:
                 raise HTTPException(status_code=401, detail="Invalid token")
-            return payload
+            return user
         except DecodeError:
             raise HTTPException(status_code=401, detail="Invalid token or signature")
     else:
         raise credentials_exception
 
+
 # test route
 @auth_router.get("/p1")
 async def protected_route(current_user: dict = Depends(get_current_user)):
     return {"message": "You are authorized, welcome!", "user": current_user}
-
-
 
 
 @auth_router.get("/oauth/callback/google", name="oauth_callback_google")
@@ -100,7 +102,7 @@ async def oauth_callback_google(
 ):
     try:
         token = await config.google_oauth_client.authorize_access_token(request)
-        user_info = token['userinfo']
+        user_info = token["userinfo"]
     except Exception as e:
         error_msg = "Login Failed. Try Again"
         if isinstance(e, OAuthError):
@@ -127,9 +129,11 @@ async def oauth_callback_google(
     session.execute(stmt)
     session.commit()
 
-    config_secret_key_bytes = config.secret_key.encode('utf-8')
+    config_secret_key_bytes = config.secret_key.encode("utf-8")
 
-    jwt_token = create_jwt_token(email, config_secret_key_bytes, config.jwt_token_expiry)
+    jwt_token = create_jwt_token(
+        email, config_secret_key_bytes, config.jwt_token_expiry
+    )
     response = RedirectResponse(
         url=url_for(request, "root", scheme=config.url_scheme),
     )

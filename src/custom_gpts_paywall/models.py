@@ -78,7 +78,7 @@ class CustomGPTApplication(Base):
     client_secret: Mapped[UUID] = mapped_column(UUIDColumn(as_uuid=True), default=uuid4)
 
     def __repr__(self) -> str:
-        return f"CustomGPTApplication(id={self.id!r}, name={self.name!r}, email_address={self.email})"
+        return f"CustomGPTApplication(id={self.id!r}, name={self.gpt_name!r})"
 
 
 class BaseVerificationRequest(Base):

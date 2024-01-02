@@ -18,17 +18,6 @@
 
       <form id="gptForm">
         <div class="mb-3">
-          <label for="name" class="form-label">Name:</label>
-          <input
-            type="text"
-            class="form-control"
-            id="name"
-            name="name"
-            required
-          />
-        </div>
-
-        <div class="mb-3">
           <label for="gpt_name" class="form-label">GPT Name:</label>
           <input
             type="text"
@@ -63,6 +52,22 @@
           />
         </div>
 
+        <div class="mb-3">
+          <label for="verification_medium" class="form-label"
+            >Verification Medium:</label
+          >
+          <select
+            class="form-select"
+            id="verification_medium"
+            name="verification_medium"
+            required
+          >
+            <option value="google">Google</option>
+            <option value="email">Email</option>
+            <option value="phone">Phone</option>
+          </select>
+        </div>
+
         <button type="button" class="btn btn-primary" onclick="submitForm()">
           Register
         </button>
@@ -77,9 +82,20 @@
         const form = document.getElementById("gptForm");
         const formData = new FormData(form);
 
+        // Create a JSON object with the desired structure
+        const jsonData = {
+          gpt_name: formData.get("gpt_name"),
+          gpt_url: formData.get("gpt_url"),
+          gpt_description: formData.get("gpt_description"),
+          verification_medium: formData.get("verification_medium"),
+        };
+
         fetch("/api/v1/custom-gpt-application", {
           method: "POST",
-          body: formData,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(jsonData),
         })
           .then((response) => {
             if (!response.ok) {
