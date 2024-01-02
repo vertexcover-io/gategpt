@@ -8,6 +8,7 @@ from fastapi import Request
 
 def utcnow() -> datetime:
     return datetime.now(datetime_module.UTC)
+#  datetime.utcnow()
 
 
 def url_for(

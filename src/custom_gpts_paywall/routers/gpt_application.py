@@ -12,25 +12,29 @@ from custom_gpts_paywall.dependencies import (
 )
 from custom_gpts_paywall.models import CustomGPTApplication, VerificationMedium
 from custom_gpts_paywall.utils import url_for
+from custom_gpts_paywall.routers.auth import get_current_user
+from fastapi.responses import RedirectResponse, FileResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
+
+
+templates = Jinja2Templates(directory="templates")
 
 
 gpt_application_router = APIRouter()
 
 
-@gpt_application_router.get("/gpt-application")
-async def gpt_application_registration():
-    pass
+@gpt_application_router.get("/gpt-application",  response_class=HTMLResponse)
+async def gpt_application_registration(request: Request):
+    return templates.TemplateResponse("registergpt.html", {"request": request})
+
 
 
 class RegisterGPTApplicationRequest(BaseModel):
-    name: str
     gpt_name: str
     gpt_url: str
-    email: EmailStr
     verification_medium: VerificationMedium
     gpt_description: Optional[str] = Field(default=None)
     token_expiry: timedelta = Field(default=DEFAULT_VERIFICATION_EXPIRY)
-    store_tokens: bool = Field(default=False, exclude=True)
 
 
 class AuthenticationDetails(BaseModel):
@@ -55,28 +59,40 @@ class RegisterGPTApplicationResponse(RegisterGPTApplicationRequest):
     name="register_custom_gpt",
     path="/api/v1/custom-gpt-application",
     status_code=201,
-    response_model=RegisterGPTApplicationResponse,
+    response_model=RegisterGPTApplicationResponse,     
 )
+# def register_custom_gpt(
+#     request: Request,
+#     # req: RegisterGPTApplicationRequest,
+#     config: ConfigDep,
+#     session: DbSession,
+#     logger: LoggerDep,
+#     current_user: dict = Depends(get_current_user),
+#     # __: None = Depends(gpt_application_auth),
+#     ):
+#     print(current_user)
+    
 def register_custom_gpt(
     request: Request,
     req: RegisterGPTApplicationRequest,
     config: ConfigDep,
     session: DbSession,
     logger: LoggerDep,
-    __: None = Depends(gpt_application_auth),
+    current_user: dict = Depends(get_current_user),
 ):
     # Extract the request parameters
+    logger.info("Hello")
+    logger.info(current_user.get("sub"))
     gpt_application = CustomGPTApplication(
-        name=req.name,
-        email=req.email,
+        user=current_user, 
         gpt_name=req.gpt_name,
         gpt_description=req.gpt_description,
         gpt_url=req.gpt_url,
         verification_medium=req.verification_medium,
         token_expiry=req.token_expiry,
-        store_tokens=req.store_tokens,
     )
     try:
+        logger.info("Hello from try")
         session.add(gpt_application)
         session.flush()
         auth_details = AuthenticationDetails(
@@ -87,10 +103,10 @@ def register_custom_gpt(
         )
 
         resp = RegisterGPTApplicationResponse(
-            name=gpt_application.name,
+            # name=gpt_application.name,
             gpt_name=gpt_application.gpt_name,
             gpt_url=gpt_application.gpt_url,
-            email=gpt_application.email,
+            user=gpt_application.user,
             verification_medium=gpt_application.verification_medium,
             gpt_description=gpt_application.gpt_description,
             token_expiry=gpt_application.token_expiry,

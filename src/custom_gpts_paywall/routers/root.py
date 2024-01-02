@@ -5,8 +5,11 @@ from sqlalchemy import text
 from custom_gpts_paywall.dependencies import DbSession, LoggerDep
 from custom_gpts_paywall.routers.auth import get_current_user
 
+from fastapi.templating import Jinja2Templates
 
 root_router = APIRouter()
+
+templates = Jinja2Templates(directory="templates")
 
 
 @root_router.get("/privacy-policy", response_class=HTMLResponse, name="privacy_policy")
@@ -48,8 +51,11 @@ async def privacy_policy():
 @root_router.get("/", include_in_schema=False, response_class=FileResponse)
 def root(logger: LoggerDep, current_user: dict = Depends(get_current_user)):
     logger.info("Root endpoint hit")
-    # return {"status": "ok"}
-    return "templates/home.html"
+    user_details = current_user.get("sub") if current_user else "Not logged in"
+    gpt_applications = current_user.get("gpt_applications", [])
+    logger.info(gpt_applications)
+    logger.info(user_details)
+    return templates.TemplateResponse("home.html", {"request": current_user, "user_details": user_details, "gpt_applications": gpt_applications})
 
 
 @root_router.get(

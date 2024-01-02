@@ -20,6 +20,7 @@ dependencies = [
     "itsdangerous>=2.1.2",
     "python-multipart>=0.0.6",
     "python-jose[cryptography]>=3.3.0",
+    "PyJWT>=2.8.0",
     "psycopg2-binary>=2.9.9",
 ]
 readme = "README.md"

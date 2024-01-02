@@ -39,6 +39,7 @@ def gpt_application_auth(
     ],
 ) -> CustomGPTApplication:
     access_token = credentials.credentials
+    print(f"Received access token: {access_token}")
     gpt_application_auth = (
         db.query(CustomGPTApplication)
         .join(OAuthToken)
@@ -49,8 +50,10 @@ def gpt_application_auth(
         .first()
     )
     if gpt_application_auth:
+        print("User authenticated via OAuth")
         return gpt_application_auth
     elif access_token == config.api_key:
+        print("User authenticated via API key")
         return None
     raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
