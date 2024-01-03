@@ -31,7 +31,7 @@ from custom_gpts_paywall.models import (
 )
 from custom_gpts_paywall.utils import url_for
 from custom_gpts_paywall.dependencies import get_current_user
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 from custom_gpts_paywall.config import templates
 
 
@@ -234,30 +234,6 @@ async def gpt_application_registration_view(
     current_user: User = Depends(get_current_user),
 ):
     return templates.TemplateResponse("registergpt.html", {"request": request})
-
-
-@gpt_application_router.post(
-    name="register_custom_gpt",
-    path="/custom-gpt-application",
-    response_model=RegisterGPTApplicationResponse,
-)
-def register_custom_gpt_view(
-    request: Request,
-    req: RegisterGPTApplicationRequest,
-    config: ConfigDep,
-    session: DbSession,
-    logger: LoggerDep,
-    current_user: User = Depends(get_current_user),
-):
-    register_custom_gpt_controller(
-        request=request,
-        req=req,
-        config=config,
-        session=session,
-        logger=logger,
-        current_user=current_user,
-    )
-    return RedirectResponse(url="/", status_code=302)
 
 
 @gpt_application_router.post(
