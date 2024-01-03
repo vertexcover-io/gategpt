@@ -1,46 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Page</title>
-    <!-- Todo Add css styles or use bootstrap -->
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 50px;
-        }
+{% extends "base.html" %} {% block title %} Gpt App Sessions {% endblock %} {%
+block body %}
+<h1>Welcome to customGPT</h1>
+<button class="login-button" onclick="triggerLogin()">Login with google</button>
 
-        h1 {
-            color: #333;
-        }
+<script>
+	function triggerLogin() {
+		var form = document.createElement("form");
+		form.method = "POST";
+		form.action = "/login";
+		document.body.appendChild(form);
 
-        .login-button {
-            display: inline-block;
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #4285f4;
-            color: #fff;
-            text-decoration: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-    </style>
-</head>
-<body>
-    <h1>Welcome to customGPT</h1>
-    <button class="login-button" onclick="triggerLogin()">Login with google</button>
-
-    <script>
-        function triggerLogin() {
-            var form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '/login';
-            document.body.appendChild(form);
-
-            form.submit();
-        }
-    </script>
-</body>
-</html>
+		form.submit();
+	}
+</script>
+{% endblock %}
