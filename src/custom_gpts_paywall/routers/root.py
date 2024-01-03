@@ -2,8 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import HTMLResponse, FileResponse
 from sqlalchemy import text
 
-from custom_gpts_paywall.dependencies import DbSession, LoggerDep
-from custom_gpts_paywall.dependencies import get_current_user
+from custom_gpts_paywall.dependencies import DbSession, LoggerDep, login_required
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 from custom_gpts_paywall.models import User
@@ -51,7 +50,7 @@ async def privacy_policy():
 
 @root_router.get("/", include_in_schema=False, response_class=FileResponse)
 def root(
-    request: Request, logger: LoggerDep, current_user: User = Depends(get_current_user)
+    request: Request, logger: LoggerDep, current_user: User = Depends(login_required)
 ):
     user_details = current_user.email
     gpt_applications = current_user.custom_gpt_applications
