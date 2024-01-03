@@ -89,24 +89,13 @@ def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    if jwt_token:
-        secret_key_bytes = config.secret_key.encode("utf-8")
-
-        try:
-            payload = jwt.decode(
-                jwt_token, secret_key_bytes, algorithms=JWT_ENCODE_ALGORITHM
-            )
-            user_email = payload.get("sub")
-
-            if user_email:
-                user = session.query(User).filter_by(email=user_email).first()
-            else:
-                raise HTTPException(status_code=401, detail="Invalid token")
-            return user
-        except jwt.DecodeError:
-            raise HTTPException(status_code=401, detail="Invalid token or signature")
-    else:
+    if not jwt_token:
         raise credentials_exception
+    secret_key_bytes = config.secret_key.encode("utf-8")
+    user = parse_user(secret_key_bytes, jwt_token, session)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return user
 
 
 def login_required(
@@ -117,7 +106,7 @@ def login_required(
 ):
     exception = HTTPException(
         status_code=status.HTTP_307_TEMPORARY_REDIRECT,
-        detail="Redirecting to login page",
+        detail="Failed parsing token.Redirecting to login page",
         headers={"Location": url_for(request=request, name="login_page")},
     )
 
