@@ -57,7 +57,7 @@ def create_app() -> FastAPI:
     )
     app.include_router(
         gpt_application_router,
-        tags=[OpenAPISchemaTags.GPTAppRegistration],
+        tags=[OpenAPISchemaTags.CustomGptApplication],
     )
 
     app.include_router(
