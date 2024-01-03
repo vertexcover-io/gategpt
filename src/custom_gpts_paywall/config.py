@@ -10,6 +10,7 @@ from functools import lru_cache
 from datetime import timedelta
 from authlib.integrations.starlette_client import OAuth
 from authlib.integrations.starlette_client.apps import StarletteOAuth2App
+from fastapi.templating import Jinja2Templates
 
 DEFAULT_VERIFICATION_EXPIRY = timedelta(seconds=300)
 DEFAULT_MIN_DELAY_BETWEEN_VERIFICATION = timedelta(seconds=20)
@@ -18,6 +19,8 @@ DEFAULT_EMAIL_FROM = "ritesh@vertexcover.io"
 GOOGLE_OAUTH_LOGIN_URL = "https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}&scope=email"
 DEFAULT_INSTRUCTION_PROMPT = "In order to use this customgpt, we first need to initiate user session and get user's name and email. Use the provided action to initiate user session."
 JWT_ENCODE_ALGORITHM = "HS256"
+
+templates = Jinja2Templates(directory="templates")
 
 
 class OpenAPISchemaTags(Enum):

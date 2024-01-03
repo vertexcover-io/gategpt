@@ -20,6 +20,7 @@ from custom_gpts_paywall.dependencies import (
     ConfigDep,
     DbSession,
     LoggerDep,
+    login_required,
 )
 from uuid import UUID, uuid4
 from custom_gpts_paywall.models import (
@@ -31,10 +32,7 @@ from custom_gpts_paywall.models import (
 from custom_gpts_paywall.utils import url_for
 from custom_gpts_paywall.dependencies import get_current_user
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
-
-
-templates = Jinja2Templates(directory="templates")
+from custom_gpts_paywall.config import templates
 
 
 gpt_application_router = APIRouter()
@@ -222,7 +220,6 @@ def gpt_app_users_sesssion(
     return user_sessions_response
 
 
-# for testing
 @gpt_application_router.get(
     "/api/v1/custom-gpt-application",
     response_model=list[CustomGPTApplicationResponse],
@@ -290,3 +287,17 @@ def register_custom_gpt_api(
         current_user=current_user,
     )
     return resp
+
+
+@gpt_application_router.get(
+    "/custom-gpt-application/{gpt_application_id}/gpt-app-sessions/",
+    response_model=list[GPTAPPSessionsResponseModel],
+    name="gpt-app-sessions",
+    include_in_schema=False,
+)
+def gpt_app_users_sesssion_page(
+    request: Request, gpt_application_id: str, user: User = Depends(login_required)
+):
+    return templates.TemplateResponse(
+        "gpt_app_sessions.html", context={"request": request}
+    )
