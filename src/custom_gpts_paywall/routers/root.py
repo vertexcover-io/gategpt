@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse, FileResponse
 from sqlalchemy import text
 
 from custom_gpts_paywall.dependencies import DbSession, LoggerDep
-from custom_gpts_paywall.routers.auth import get_current_user
+from custom_gpts_paywall.dependencies import get_current_user
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 from custom_gpts_paywall.models import User

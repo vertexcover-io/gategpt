@@ -16,7 +16,6 @@ import jwt
 from authlib.jose.errors import DecodeError
 from fastapi.exceptions import HTTPException
 
-from sqlalchemy.orm import joinedload
 
 from fastapi.templating import Jinja2Templates
 
@@ -75,12 +74,7 @@ def get_current_user(
             user_email = payload.get("sub")
 
             if user_email:
-                user = (
-                    session.query(User)
-                    .options(joinedload(User.custom_gpt_applications))
-                    .filter_by(email=user_email)
-                    .first()
-                )
+                user = session.query(User).filter_by(email=user_email).first()
             else:
                 raise HTTPException(status_code=401, detail="Invalid token")
             return user

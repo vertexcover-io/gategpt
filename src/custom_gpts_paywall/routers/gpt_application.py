@@ -1,9 +1,11 @@
 from datetime import timedelta
+from logging import Logger
 from typing import Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy.exc import IntegrityError
-from custom_gpts_paywall.config import DEFAULT_VERIFICATION_EXPIRY
+from sqlalchemy.orm import Session
+from custom_gpts_paywall.config import DEFAULT_VERIFICATION_EXPIRY, EnvConfig
 from custom_gpts_paywall.dependencies import (
     ConfigDep,
     DbSession,
@@ -11,8 +13,8 @@ from custom_gpts_paywall.dependencies import (
 )
 from custom_gpts_paywall.models import CustomGPTApplication, VerificationMedium, User
 from custom_gpts_paywall.utils import url_for
-from custom_gpts_paywall.routers.auth import get_current_user
-from fastapi.responses import HTMLResponse
+from custom_gpts_paywall.dependencies import get_current_user
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 
@@ -20,11 +22,6 @@ templates = Jinja2Templates(directory="templates")
 
 
 gpt_application_router = APIRouter()
-
-
-@gpt_application_router.get("/gpt-application", response_class=HTMLResponse)
-async def gpt_application_registration(request: Request):
-    return templates.TemplateResponse("registergpt.html", {"request": request})
 
 
 class RegisterGPTApplicationRequest(BaseModel):
@@ -53,24 +50,14 @@ class RegisterGPTApplicationResponse(RegisterGPTApplicationRequest):
     authentication_details: AuthenticationDetails
 
 
-@gpt_application_router.post(
-    name="register_custom_gpt",
-    path="/api/v1/custom-gpt-application",
-    status_code=201,
-    response_model=RegisterGPTApplicationResponse,
-)
-def register_custom_gpt(
+def register_custom_gpt_controller(
     request: Request,
     req: RegisterGPTApplicationRequest,
-    config: ConfigDep,
-    session: DbSession,
-    logger: LoggerDep,
-    current_user: User = Depends(get_current_user),
+    config: EnvConfig,
+    session: Session,
+    logger: Logger,
+    current_user: User,
 ):
-    # Extract the request parameters
-    logger.info("Hello")
-    logger.info(current_user.email)
-
     gpt_application = CustomGPTApplication(
         gpt_name=req.gpt_name,
         gpt_description=req.gpt_description,
@@ -114,3 +101,63 @@ def register_custom_gpt(
             status_code=409,
             detail=f"An account for gpt_url {req.gpt_url} already exists",
         )
+
+
+@gpt_application_router.get("/custom-gpt-application", response_class=HTMLResponse)
+async def gpt_application_registration_view(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+):
+    return templates.TemplateResponse("registergpt.html", {"request": request})
+
+
+@gpt_application_router.post(
+    name="register_custom_gpt",
+    path="/custom-gpt-application",
+    response_model=RegisterGPTApplicationResponse,
+)
+def register_custom_gpt_view(
+    request: Request,
+    req: RegisterGPTApplicationRequest,
+    config: ConfigDep,
+    session: DbSession,
+    logger: LoggerDep,
+    current_user: User = Depends(get_current_user),
+):
+    register_custom_gpt_controller(
+        request=request,
+        req=req,
+        config=config,
+        session=session,
+        logger=logger,
+        current_user=current_user,
+    )
+    return RedirectResponse(url="/", status_code=302)
+
+
+@gpt_application_router.post(
+    name="register_custom_gpt",
+    path="/api/v1/custom-gpt-application",
+    status_code=201,
+    response_model=RegisterGPTApplicationResponse,
+)
+def register_custom_gpt_api(
+    request: Request,
+    req: RegisterGPTApplicationRequest,
+    config: ConfigDep,
+    session: DbSession,
+    logger: LoggerDep,
+    current_user: User = Depends(get_current_user),
+):
+    # Extract the request parameters
+    logger.info("Hello")
+    logger.info(current_user.email)
+    resp = register_custom_gpt_controller(
+        request=request,
+        req=req,
+        config=config,
+        session=session,
+        logger=logger,
+        current_user=current_user,
+    )
+    return resp
