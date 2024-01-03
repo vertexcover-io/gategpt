@@ -151,7 +151,6 @@ def register_custom_gpt_controller(
     except IntegrityError as ex:
         logger.error(f"Failed to create user: {ex}", exc_info=True)
         session.rollback()
-        print("error")
         raise HTTPException(
             status_code=409,
             detail=f"An account for gpt_url {req.gpt_url} already exists",
