@@ -1,6 +1,5 @@
 from datetime import timedelta
 from datetime import datetime
-from fastapi import status
 from typing import Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl
@@ -15,7 +14,6 @@ from custom_gpts_paywall.dependencies import (
     gpt_application_auth,
 )
 from uuid import UUID, uuid4
-from starlette.responses import Response
 from custom_gpts_paywall.models import (
     CustomGPTApplication,
     UserSession,
@@ -154,11 +152,11 @@ def register_custom_gpt(
 
 
 @gpt_application_router.get(
-    "/{uu_id}/user-sessions/",
+    "/{gpt_application_id}/user-sessions/",
     response_model=list[UserSessionResponseModel],
 )
 def gpt_app_users_sesssion(
-    uu_id: str,
+    gpt_application_id: str,
     session: DbSession,
     logger: LoggerDep,
     query_params: UserSessionQueryModel = Depends(),
@@ -166,7 +164,7 @@ def gpt_app_users_sesssion(
     user_sessions_query = (
         session.query(UserSession)
         .join(CustomGPTApplication)
-        .filter(CustomGPTApplication.uuid == uu_id)
+        .filter(CustomGPTApplication.uuid == gpt_application_id)
     )
 
     if query_params.name:
@@ -196,8 +194,10 @@ def gpt_app_users_sesssion(
     user_sessions = user_sessions_query.all()
 
     if not user_sessions:
-        logger.info(f"No user sessions found for GPT app with uuid {uu_id}")
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        logger.info(
+            f"No user sessions found for GPT app with uuid {gpt_application_id}"
+        )
+        return []
 
     return [UserSessionResponseModel.model_validate(i) for i in user_sessions]
 
