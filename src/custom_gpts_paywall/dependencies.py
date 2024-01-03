@@ -1,13 +1,14 @@
 from logging import Logger
 import logging
 from typing import Annotated
+from fastapi import status
 import jwt
-from fastapi import Cookie, Depends, HTTPException
+from fastapi import Cookie, Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 from custom_gpts_paywall.config import JWT_ENCODE_ALGORITHM, EnvConfig, create_config
 from custom_gpts_paywall.models import OAuthToken, CustomGPTApplication, User
-from custom_gpts_paywall.utils import utcnow
+from custom_gpts_paywall.utils import url_for, utcnow
 
 config = create_config()
 
@@ -59,6 +60,24 @@ def gpt_application_auth(
     raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
 
+def parse_user(secret_key_bytes, jwt_token, session) -> User | None:
+    secret_key_bytes = config.secret_key.encode("utf-8")
+
+    try:
+        payload = jwt.decode(
+            jwt_token, secret_key_bytes, algorithms=JWT_ENCODE_ALGORITHM
+        )
+        user_email = payload.get("sub")
+
+        if user_email:
+            user = session.query(User).filter_by(email=user_email).first()
+        else:
+            return None
+        return user
+    except jwt.DecodeError:
+        return None
+
+
 def get_current_user(
     config: ConfigDep,
     session: DbSession,
@@ -70,24 +89,34 @@ def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    if jwt_token:
-        secret_key_bytes = config.secret_key.encode("utf-8")
-
-        try:
-            payload = jwt.decode(
-                jwt_token, secret_key_bytes, algorithms=JWT_ENCODE_ALGORITHM
-            )
-            user_email = payload.get("sub")
-
-            if user_email:
-                user = session.query(User).filter_by(email=user_email).first()
-            else:
-                raise HTTPException(status_code=401, detail="Invalid token")
-            return user
-        except jwt.DecodeError:
-            raise HTTPException(status_code=401, detail="Invalid token or signature")
-    else:
+    if not jwt_token:
         raise credentials_exception
+    secret_key_bytes = config.secret_key.encode("utf-8")
+    user = parse_user(secret_key_bytes, jwt_token, session)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return user
+
+
+def login_required(
+    request: Request,
+    config: ConfigDep,
+    session: DbSession,
+    jwt_token: str = Cookie(None),
+):
+    exception = HTTPException(
+        status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+        detail="Failed parsing token.Redirecting to login page",
+        headers={"Location": url_for(request=request, name="login_page")},
+    )
+
+    if not jwt_token:
+        raise exception
+    secret_key_bytes = config.secret_key.encode("utf-8")
+    user = parse_user(secret_key_bytes, jwt_token, session)
+    if not user:
+        raise exception
+    return user
 
 
 GPTApplicationDep = Annotated[CustomGPTApplication, Depends(gpt_application_auth)]
