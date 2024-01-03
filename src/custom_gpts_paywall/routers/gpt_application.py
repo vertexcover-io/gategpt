@@ -38,7 +38,7 @@ class RegisterGPTApplicationRequest(BaseModel):
     store_tokens: bool = Field(default=False, exclude=True)
 
 
-class CustomGPTApplicationModel(BaseModel):
+class CustomGPTApplicationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -157,7 +157,7 @@ def register_custom_gpt(
     "/{uu_id}/user-sessions/",
     response_model=list[UserSessionResponseModel],
 )
-def gpt_app_user_stat(
+def gpt_app_users_sesssion(
     uu_id: str,
     session: DbSession,
     logger: LoggerDep,
@@ -205,8 +205,8 @@ def gpt_app_user_stat(
 # for testing
 @gpt_application_router.get(
     "",
-    response_model=list[CustomGPTApplicationModel],
+    response_model=list[CustomGPTApplicationResponse],
 )
 def gpt_applications(session: DbSession, logger: LoggerDep):
     gpt_apps = session.query(CustomGPTApplication).all()
-    return [CustomGPTApplicationModel.model_validate(i) for i in gpt_apps]
+    return [CustomGPTApplicationResponse.model_validate(i) for i in gpt_apps]
