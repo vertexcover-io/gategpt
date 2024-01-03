@@ -85,7 +85,7 @@ class UserSessionResponseModel(BaseModel):
 
 
 class UserSessionQueryModel(BaseModel):
-    email: str = ""
+    email: EmailStr | str = Field(default="")
     name: str = ""
     start_datetime: datetime | None = None
     end_datetime: datetime | None = None
