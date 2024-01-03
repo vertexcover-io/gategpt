@@ -1,10 +1,16 @@
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import HTMLResponse, FileResponse
 from sqlalchemy import text
 
 from custom_gpts_paywall.dependencies import DbSession, LoggerDep
+from custom_gpts_paywall.dependencies import get_current_user
+from fastapi import Request
+from fastapi.templating import Jinja2Templates
+from custom_gpts_paywall.models import User
 
 root_router = APIRouter()
+
+templates = Jinja2Templates(directory="templates")
 
 
 @root_router.get("/privacy-policy", response_class=HTMLResponse, name="privacy_policy")
@@ -43,10 +49,23 @@ async def privacy_policy():
     """
 
 
-@root_router.get("/", include_in_schema=False, response_class=JSONResponse)
-def root(logger: LoggerDep):
+@root_router.get("/", include_in_schema=False, response_class=FileResponse)
+def root(
+    request: Request, logger: LoggerDep, current_user: User = Depends(get_current_user)
+):
+    user_details = current_user.email
+    gpt_applications = current_user.custom_gpt_applications
+    logger.info(gpt_applications)
+    logger.info(user_details)
     logger.info("Root endpoint hit")
-    return {"status": "ok"}
+    return templates.TemplateResponse(
+        "home.html",
+        {
+            "request": request,
+            "user_details": user_details,
+            "gpt_applications": gpt_applications,
+        },
+    )
 
 
 @root_router.get(

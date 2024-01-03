@@ -17,11 +17,13 @@ SENDPOST_API_URL = "https://api.sendpost.io/api/v1/subaccount/email/"
 DEFAULT_EMAIL_FROM = "ritesh@vertexcover.io"
 GOOGLE_OAUTH_LOGIN_URL = "https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}&scope=email"
 DEFAULT_INSTRUCTION_PROMPT = "In order to use this customgpt, we first need to initiate user session and get user's name and email. Use the provided action to initiate user session."
+JWT_ENCODE_ALGORITHM = "HS256"
 
 
 class OpenAPISchemaTags(Enum):
     OpenAPI = "openapi"
-    Registration = "registration"
+    Auth = "auth"
+    GPTAppRegistration = "gpt_app_registration"
     OAuth2Server = "oauth2_server"
     UserSession = "user_session"
     CustomGptApplication = "custom_gpt_application"
@@ -40,6 +42,7 @@ class EnvConfig(BaseModel):
     google_oauth_client_id: str
     google_oauth_client_secret: str
     db_engine: Engine = Field(default=None)
+    jwt_token_expiry: timedelta = Field(default=timedelta(days=1))
     session_local: Callable[[], Session] = Field(default=None)
     google_oauth_client: StarletteOAuth2App = Field(default=None)
     oauth_redirect_uri_host: str = Field(default="chat.openai.com")

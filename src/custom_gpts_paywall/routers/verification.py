@@ -8,13 +8,11 @@ from custom_gpts_paywall.dependencies import (
     ConfigDep,
     GPTApplicationDep,
     DbSession,
-    LoggerDep,
 )
 from custom_gpts_paywall.emailer import send_verification_email
 from custom_gpts_paywall.models import (
     EmailVerificationRequest,
     OAuthVerificationRequest,
-    OAuthVerificationRequestStatus,
     VerificationMedium,
 )
 from custom_gpts_paywall.utils import url_for, utcnow
@@ -236,84 +234,3 @@ async def _get_gpt_application_email_from_oauth(
         raise Exception(
             "Unable to get gpt_application email from google oauth. Please try again"
         )
-
-
-@verification_router.post("/verify-oauth", tags=["oauth_verification"])
-async def verify_oauth(
-    request: Request,
-    verify_request: VerifyOAuthRequest,
-    config: ConfigDep,
-    session: DbSession,
-    gpt_app: GPTApplicationDep,
-    logger: LoggerDep,
-):
-    oauth_verification_request = (
-        session.query(OAuthVerificationRequest)
-        .filter(
-            OAuthVerificationRequest.uuid == verify_request.verification_request_id,
-            OAuthVerificationRequest.gpt_application_id == gpt_app.id,
-        )
-        .first()
-    )
-    if not oauth_verification_request:
-        raise HTTPException(
-            status_code=404,
-            detail="Verification Request not found",
-        )
-
-    now = utcnow()
-    if (
-        oauth_verification_request.created_at + gpt_app.token_expiry < now
-        or oauth_verification_request.status
-        in [
-            OAuthVerificationRequestStatus.ARCHIVED,
-            OAuthVerificationRequestStatus.EXPIRED,
-            OAuthVerificationRequestStatus.FAILED,
-            OAuthVerificationRequestStatus.VERIFIED,
-        ]
-    ):
-        raise HTTPException(
-            status_code=400,
-            detail="Either OAuth Verification Request is expired or archived. Please start again",
-        )
-
-    elif (
-        oauth_verification_request.status
-        != OAuthVerificationRequestStatus.CALLBACK_COMPLETED
-    ):
-        return VerifyOAuthResponse(
-            is_verified=False,
-            message=f"OAuth Verification Request is in status {oauth_verification_request.status}. Please verify after some",
-        )
-
-    elif oauth_verification_request.authorization_code != verify_request.code:
-        print(oauth_verification_request.authorization_code, verify_request.code)
-        raise HTTPException(
-            status_code=400,
-            detail="Authorization code does not match",
-        )
-
-    elif oauth_verification_request.created_at + gpt_app.token_expiry < now:
-        raise HTTPException(
-            status_code=400,
-            detail="OAuth Verification Request has expired. Please start again",
-        )
-
-    email = await _get_gpt_application_email_from_oauth(
-        authorization_code=oauth_verification_request.authorization_code,
-        nonce=oauth_verification_request.nonce,
-        verification_request_uuid=verify_request.verification_request_id,
-        redirect_uri=url_for(
-            request, "oauth_google_callback", scheme=config.url_scheme
-        ),
-        config=config,
-        logger=logger,
-    )
-    oauth_verification_request.status = OAuthVerificationRequestStatus.VERIFIED
-    oauth_verification_request.verified_at = utcnow()
-    oauth_verification_request.email = email
-    session.commit()
-    return {
-        "is_verified": True,
-        "message": "OAuth has been verified successfully",
-    }

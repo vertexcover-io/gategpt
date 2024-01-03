@@ -1,52 +1,61 @@
 from datetime import timedelta
 from datetime import datetime
+from logging import Logger
 from typing import Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl, validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    HttpUrl,
+    validator,
+    EmailStr,
+)
 from sqlalchemy.sql import and_
 import shortuuid
 from sqlalchemy.exc import IntegrityError
-from custom_gpts_paywall.config import DEFAULT_VERIFICATION_EXPIRY
+from sqlalchemy.orm import Session
+from custom_gpts_paywall.config import DEFAULT_VERIFICATION_EXPIRY, EnvConfig
 from custom_gpts_paywall.dependencies import (
     ConfigDep,
     DbSession,
     LoggerDep,
-    gpt_application_auth,
 )
 from uuid import UUID, uuid4
 from custom_gpts_paywall.models import (
     CustomGPTApplication,
-    UserSession,
+    User,
     VerificationMedium,
+    GPTAppSession,
 )
 from custom_gpts_paywall.utils import url_for
+from custom_gpts_paywall.dependencies import get_current_user
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
 
 
-gpt_application_router = APIRouter(prefix="/custom-gpt-application")
+templates = Jinja2Templates(directory="templates")
+
+
+gpt_application_router = APIRouter()
 
 
 class RegisterGPTApplicationRequest(BaseModel):
-    name: str
     gpt_name: str
     gpt_url: str
-    email: EmailStr
     verification_medium: VerificationMedium
     gpt_description: Optional[str] = Field(default=None)
     token_expiry: timedelta = Field(default=DEFAULT_VERIFICATION_EXPIRY)
-    store_tokens: bool = Field(default=False, exclude=True)
 
 
 class CustomGPTApplicationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     uuid: str = Field(default_factory=shortuuid.uuid)
-    name: str
     gpt_name: str
     gpt_description: Optional[str]
     gpt_url: str
-    email: EmailStr
     verification_medium: VerificationMedium
-    store_tokens: bool = False
     token_expiry: timedelta
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -72,7 +81,7 @@ class RegisterGPTApplicationResponse(RegisterGPTApplicationRequest):
     authentication_details: AuthenticationDetails
 
 
-class UserSessionResponseModel(BaseModel):
+class GPTAPPSessionsResponseModel(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     gpt_application_id: str = Field(default_factory=shortuuid.uuid)
     email: str
@@ -98,32 +107,24 @@ class UserSessionQueryModel(BaseModel):
         return v
 
 
-@gpt_application_router.post(
-    name="register_custom_gpt",
-    path="",
-    status_code=201,
-    response_model=RegisterGPTApplicationResponse,
-)
-def register_custom_gpt(
+def register_custom_gpt_controller(
     request: Request,
     req: RegisterGPTApplicationRequest,
-    config: ConfigDep,
-    session: DbSession,
-    logger: LoggerDep,
-    __: None = Depends(gpt_application_auth),
+    config: EnvConfig,
+    session: Session,
+    logger: Logger,
+    current_user: User,
 ):
-    # Extract the request parameters
     gpt_application = CustomGPTApplication(
-        name=req.name,
-        email=req.email,
         gpt_name=req.gpt_name,
         gpt_description=req.gpt_description,
         gpt_url=req.gpt_url,
         verification_medium=req.verification_medium,
-        token_expiry=req.token_expiry,
-        store_tokens=req.store_tokens,
+        token_expiry=DEFAULT_VERIFICATION_EXPIRY,
+        user=current_user,
     )
     try:
+        logger.info("Hello from try")
         session.add(gpt_application)
         session.flush()
         auth_details = AuthenticationDetails(
@@ -134,10 +135,8 @@ def register_custom_gpt(
         )
 
         resp = RegisterGPTApplicationResponse(
-            name=gpt_application.name,
             gpt_name=gpt_application.gpt_name,
             gpt_url=gpt_application.gpt_url,
-            email=gpt_application.email,
             verification_medium=gpt_application.verification_medium,
             gpt_description=gpt_application.gpt_description,
             token_expiry=gpt_application.token_expiry,
@@ -154,6 +153,7 @@ def register_custom_gpt(
     except IntegrityError as ex:
         logger.error(f"Failed to create user: {ex}", exc_info=True)
         session.rollback()
+        print("error")
         raise HTTPException(
             status_code=409,
             detail=f"An account for gpt_url {req.gpt_url} already exists",
@@ -161,8 +161,8 @@ def register_custom_gpt(
 
 
 @gpt_application_router.get(
-    "/{gpt_application_id}/user-sessions/",
-    response_model=list[UserSessionResponseModel],
+    "/api/v1/custom-gpt-application/{gpt_application_id}/gpt-app-sessions/",
+    response_model=list[GPTAPPSessionsResponseModel],
 )
 def gpt_app_users_sesssion(
     gpt_application_id: str,
@@ -172,9 +172,9 @@ def gpt_app_users_sesssion(
 ):
     user_sessions_query = (
         session.query(
-            UserSession.email,
-            UserSession.name,
-            UserSession.created_at,
+            GPTAppSession.email,
+            GPTAppSession.name,
+            GPTAppSession.created_at,
             CustomGPTApplication.uuid,
         )
         .join(CustomGPTApplication)
@@ -183,26 +183,26 @@ def gpt_app_users_sesssion(
 
     if query_params.name:
         user_sessions_query = user_sessions_query.filter(
-            UserSession.name == query_params.name
+            GPTAppSession.name == query_params.name
         )
     if query_params.email:
         user_sessions_query = user_sessions_query.filter(
-            UserSession.email == query_params.email
+            GPTAppSession.email == query_params.email
         )
     if query_params.start_datetime and query_params.end_datetime:
         user_sessions_query = user_sessions_query.filter(
             and_(
-                UserSession.created_at >= query_params.start_datetime,
-                UserSession.created_at <= query_params.end_datetime,
+                GPTAppSession.created_at >= query_params.start_datetime,
+                GPTAppSession.created_at <= query_params.end_datetime,
             )
         )
     elif query_params.start_datetime:
         user_sessions_query = user_sessions_query.filter(
-            UserSession.created_at >= query_params.start_datetime,
+            GPTAppSession.created_at >= query_params.start_datetime,
         )
     elif query_params.end_datetime:
         user_sessions_query = user_sessions_query.filter(
-            UserSession.created_at <= query_params.end_datetime,
+            GPTAppSession.created_at <= query_params.end_datetime,
         )
 
     user_sessions = user_sessions_query.limit(query_params.limit)
@@ -217,16 +217,76 @@ def gpt_app_users_sesssion(
 
     user_sessions_response = []
     for i in user_sessions:
-        user_sessions_response.append(UserSessionResponseModel.model_validate(i))
+        user_sessions_response.append(GPTAPPSessionsResponseModel.model_validate(i))
 
     return user_sessions_response
 
 
 # for testing
 @gpt_application_router.get(
-    "",
+    "/api/v1/custom-gpt-application",
     response_model=list[CustomGPTApplicationResponse],
 )
 def gpt_applications(session: DbSession, logger: LoggerDep):
     gpt_apps = session.query(CustomGPTApplication).all()
     return [CustomGPTApplicationResponse.model_validate(i) for i in gpt_apps]
+
+
+@gpt_application_router.get("/custom-gpt-application", response_class=HTMLResponse)
+async def gpt_application_registration_view(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+):
+    return templates.TemplateResponse("registergpt.html", {"request": request})
+
+
+@gpt_application_router.post(
+    name="register_custom_gpt",
+    path="/custom-gpt-application",
+    response_model=RegisterGPTApplicationResponse,
+)
+def register_custom_gpt_view(
+    request: Request,
+    req: RegisterGPTApplicationRequest,
+    config: ConfigDep,
+    session: DbSession,
+    logger: LoggerDep,
+    current_user: User = Depends(get_current_user),
+):
+    register_custom_gpt_controller(
+        request=request,
+        req=req,
+        config=config,
+        session=session,
+        logger=logger,
+        current_user=current_user,
+    )
+    return RedirectResponse(url="/", status_code=302)
+
+
+@gpt_application_router.post(
+    name="register_custom_gpt",
+    path="/api/v1/custom-gpt-application",
+    status_code=201,
+    response_model=RegisterGPTApplicationResponse,
+)
+def register_custom_gpt_api(
+    request: Request,
+    req: RegisterGPTApplicationRequest,
+    config: ConfigDep,
+    session: DbSession,
+    logger: LoggerDep,
+    current_user: User = Depends(get_current_user),
+):
+    # Extract the request parameters
+    logger.info("Hello")
+    logger.info(current_user.email)
+    resp = register_custom_gpt_controller(
+        request=request,
+        req=req,
+        config=config,
+        session=session,
+        logger=logger,
+        current_user=current_user,
+    )
+    return resp
