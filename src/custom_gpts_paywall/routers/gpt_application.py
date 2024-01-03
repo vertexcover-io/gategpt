@@ -2,7 +2,7 @@ from datetime import timedelta
 from datetime import datetime
 from typing import Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl, validator
 from sqlalchemy.sql import and_
 import shortuuid
 from sqlalchemy.exc import IntegrityError
@@ -85,6 +85,17 @@ class UserSessionQueryModel(BaseModel):
     name: str | None = None
     start_datetime: datetime | None = None
     end_datetime: datetime | None = None
+
+    limit: int | None = None
+    offset: int | None = None
+
+    @validator("limit")
+    def set_max_limit(cls, v):
+        if v is not None and v > 50:
+            return 50
+        if not v:
+            return 20
+        return v
 
 
 @gpt_application_router.post(
@@ -194,8 +205,10 @@ def gpt_app_users_sesssion(
             UserSession.created_at <= query_params.end_datetime,
         )
 
-    user_sessions = user_sessions_query.all()
+    user_sessions = user_sessions_query.limit(query_params.limit)
 
+    if query_params.offset:
+        user_sessions = user_sessions_query.offset(query_params.offset)
     if not user_sessions:
         logger.info(
             f"No user sessions found for GPT app with uuid {gpt_application_id}"
