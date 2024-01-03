@@ -39,7 +39,6 @@ class RegisterGPTApplicationRequest(BaseModel):
 class CustomGPTApplicationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
     uuid: str = Field(default_factory=shortuuid.uuid)
     name: str
     gpt_name: str
@@ -75,8 +74,7 @@ class RegisterGPTApplicationResponse(RegisterGPTApplicationRequest):
 
 class UserSessionResponseModel(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    id: int
-    gpt_application_id: int
+    gpt_application_id: str = Field(default_factory=shortuuid.uuid)
     email: str
     name: str
     created_at: datetime
@@ -162,7 +160,12 @@ def gpt_app_users_sesssion(
     query_params: UserSessionQueryModel = Depends(),
 ):
     user_sessions_query = (
-        session.query(UserSession)
+        session.query(
+            UserSession.email,
+            UserSession.name,
+            UserSession.created_at,
+            CustomGPTApplication.uuid,
+        )
         .join(CustomGPTApplication)
         .filter(CustomGPTApplication.uuid == gpt_application_id)
     )
@@ -199,7 +202,11 @@ def gpt_app_users_sesssion(
         )
         return []
 
-    return [UserSessionResponseModel.model_validate(i) for i in user_sessions]
+    user_sessions_response = []
+    for i in user_sessions:
+        user_sessions_response.append(UserSessionResponseModel.model_validate(i))
+
+    return user_sessions_response
 
 
 # for testing
