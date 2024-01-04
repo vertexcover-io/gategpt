@@ -158,7 +158,7 @@ def register_custom_gpt_controller(
 
 
 @gpt_application_router.get(
-    "/api/v1/custom-gpt-application/{gpt_application_id}/gpt-app-sessions/",
+    "/api/v1/custom-gpt-application/{gpt_application_id}/gpt-app-sessions",
     response_model=list[GPTAPPSessionsResponseModel],
 )
 def gpt_app_users_sesssion(
