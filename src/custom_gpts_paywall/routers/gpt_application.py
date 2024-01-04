@@ -1,16 +1,19 @@
 from datetime import timedelta
 from datetime import datetime
 from logging import Logger
-from typing import Literal, Optional
+from typing import Annotated, Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
     HttpUrl,
+    StringConstraints,
+    UrlConstraints,
     validator,
     EmailStr,
 )
+from pydantic_core import Url
 from sqlalchemy.sql import and_
 import shortuuid
 from sqlalchemy.exc import IntegrityError
@@ -39,8 +42,8 @@ gpt_application_router = APIRouter()
 
 
 class RegisterGPTApplicationRequest(BaseModel):
-    gpt_name: str
-    gpt_url: str
+    gpt_name: Annotated[str, StringConstraints(max_length=30)]
+    gpt_url: Annotated[Url, UrlConstraints(allowed_schemes=["http", "https"])]
     verification_medium: VerificationMedium
     gpt_description: Optional[str] = Field(default=None)
     token_expiry: timedelta = Field(default=DEFAULT_VERIFICATION_EXPIRY)
