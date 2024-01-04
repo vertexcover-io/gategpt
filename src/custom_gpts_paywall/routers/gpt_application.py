@@ -233,7 +233,7 @@ async def gpt_application_registration_view(
     request: Request,
     current_user: User = Depends(get_current_user),
 ):
-    return templates.TemplateResponse("registergpt.html", {"request": request})
+    return templates.TemplateResponse("register_gpt.html", {"request": request})
 
 
 @gpt_application_router.post(
