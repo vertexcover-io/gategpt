@@ -1,5 +1,5 @@
 import logging
-from fastapi import FastAPI
+from fastapi import FastAPI, staticfiles
 from starlette.middleware.sessions import SessionMiddleware
 from custom_gpts_paywall.config import EnvConfig, OpenAPISchemaTags, create_config
 from custom_gpts_paywall.routers.root import root_router
@@ -41,6 +41,7 @@ def create_app() -> FastAPI:
             },
         ],
     )
+    app.mount("/static", staticfiles.StaticFiles(directory="static"), name="static")
     perform_setup(config)
     app.add_middleware(SessionMiddleware, secret_key=config.secret_key)
     app.include_router(root_router)

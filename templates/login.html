@@ -4,13 +4,13 @@ block body %}
 <button class="login-button" onclick="triggerLogin()">Login with google</button>
 
 <script>
-	function triggerLogin() {
-		var form = document.createElement("form");
-		form.method = "POST";
-		form.action = "/login";
-		document.body.appendChild(form);
+  function triggerLogin() {
+    var form = document.createElement("form");
+    form.method = "POST";
+    form.action = "/login";
+    document.body.appendChild(form);
 
-		form.submit();
-	}
+    form.submit();
+  }
 </script>
 {% endblock %}
