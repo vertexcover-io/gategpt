@@ -119,13 +119,12 @@ def register_custom_gpt_controller(
     gpt_application = CustomGPTApplication(
         gpt_name=req.gpt_name,
         gpt_description=req.gpt_description,
-        gpt_url=req.gpt_url,
+        gpt_url=str(req.gpt_url),
         verification_medium=req.verification_medium,
         token_expiry=DEFAULT_VERIFICATION_EXPIRY,
         user=current_user,
     )
     try:
-        logger.info("Hello from try")
         session.add(gpt_application)
         session.flush()
         auth_details = AuthenticationDetails(
@@ -253,8 +252,6 @@ def register_custom_gpt_api(
     logger: LoggerDep,
     current_user: User = Depends(get_current_user),
 ):
-    # Extract the request parameters
-    logger.info("Hello")
     logger.info(current_user.email)
     resp = register_custom_gpt_controller(
         request=request,
