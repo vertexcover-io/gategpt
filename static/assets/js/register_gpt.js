@@ -1,4 +1,5 @@
 let submitButton = document.querySelector("button");
+let errorDiv = document.getElementById("error");
 
 async function postGPTApp(data) {
 	try {
@@ -9,18 +10,22 @@ async function postGPTApp(data) {
 			},
 			body: JSON.stringify(data),
 		});
+		let errorString;
 		if (response.ok) {
 			window.location.href = "/";
 			return;
 		} else if (response.status === 422) {
 			let errorJson = (await response.json()).detail[0];
-			let error_string = errorJson.loc[1].split("_").join(" ");
-			error_string = `${error_string} : ${errorJson.msg}`;
-			alert(error_string);
+			errorString = errorJson.loc[1].split("_").join(" ");
+			errorString = `${errorString} : ${errorJson.msg}`;
 		} else if (response.status === 409) {
 			let errorJson = await response.json();
-			alert(errorJson.detail);
+			errorString = errorJson.detail;
 		}
+		errorDiv.innerText = errorString;
+		errorDiv.classList.add("alert")
+		errorDiv.classList.add("alert-danger")
+		errorDiv.style.display = "block";
 	} catch (e) {
 		console.log(e);
 	}
