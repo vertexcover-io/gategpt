@@ -48,7 +48,7 @@ async def privacy_policy():
     """
 
 
-@root_router.get("/", include_in_schema=False, response_class=FileResponse)
+@root_router.get("/", include_in_schema=False, response_class=FileResponse, name="root")
 def root(
     request: Request, logger: LoggerDep, current_user: User = Depends(login_required)
 ):

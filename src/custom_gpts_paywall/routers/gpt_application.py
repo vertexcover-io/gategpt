@@ -230,10 +230,14 @@ def gpt_applications(session: DbSession, logger: LoggerDep):
     return [CustomGPTApplicationResponse.model_validate(i) for i in gpt_apps]
 
 
-@gpt_application_router.get("/custom-gpt-application", response_class=HTMLResponse)
+@gpt_application_router.get(
+    "/custom-gpt-application",
+    response_class=HTMLResponse,
+    name="register_custom_gpt_app_page",
+)
 async def gpt_application_registration_view(
     request: Request,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(login_required),
 ):
     return templates.TemplateResponse("register_gpt.html", {"request": request})
 
