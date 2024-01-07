@@ -91,7 +91,7 @@ class GPTAPPSessionsResponseModel(BaseModel):
     created_at: datetime
 
 
-class GPTAPPSesssionPginatedModel(BaseModel):
+class GPTAPPSesssionPaginatedModel(BaseModel):
     items: list[GPTAPPSessionsResponseModel]
     next_page_avialable: bool
     total_count: int
@@ -168,13 +168,14 @@ def register_custom_gpt_controller(
 
 @gpt_application_router.get(
     "/api/v1/custom-gpt-application/{gpt_application_id}/gpt-app-sessions",
-    response_model=GPTAPPSesssionPginatedModel,
+    response_model=GPTAPPSesssionPaginatedModel,
 )
 def gpt_app_users_sesssion(
     gpt_application_id: str,
     session: DbSession,
     logger: LoggerDep,
     query_params: UserSessionQueryModel = Depends(),
+    user: User = Depends(get_current_user),
 ):
     user_sessions_query = (
         session.query(
@@ -184,7 +185,12 @@ def gpt_app_users_sesssion(
             CustomGPTApplication.uuid,
         )
         .join(CustomGPTApplication)
-        .filter(CustomGPTApplication.uuid == gpt_application_id)
+        .filter(
+            and_(
+                CustomGPTApplication.uuid == gpt_application_id,
+                CustomGPTApplication.user_id == user.id,
+            )
+        )
     )
 
     if query_params.name:
@@ -227,7 +233,6 @@ def gpt_app_users_sesssion(
         logger.info(
             f"No user sessions found for GPT app with uuid {gpt_application_id}"
         )
-        return []
 
     pagintaed_response = {
         "items": user_sessions,
@@ -242,8 +247,14 @@ def gpt_app_users_sesssion(
     "/api/v1/custom-gpt-application",
     response_model=list[CustomGPTApplicationResponse],
 )
-def gpt_applications(session: DbSession, logger: LoggerDep):
-    gpt_apps = session.query(CustomGPTApplication).all()
+def gpt_applications(
+    session: DbSession, logger: LoggerDep, user: User = Depends(get_current_user)
+):
+    gpt_apps = (
+        session.query(CustomGPTApplication)
+        .filter(CustomGPTApplication.user_id == user.id)
+        .all()
+    )
     return [CustomGPTApplicationResponse.model_validate(i) for i in gpt_apps]
 
 
