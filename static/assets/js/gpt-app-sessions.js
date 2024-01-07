@@ -1,7 +1,62 @@
 let table = document.getElementById("sessionsTable");
 let searchBtn = document.getElementById("searchBtn");
 let fullPath = new URL(window.location.href);
-fullPath = `/api/v1${fullPath.pathname}`;
+let current_offset = 0;
+let OFFEST_VAL = 20;
+let paginateNav = document.getElementById("app-pagination");
+
+fullPath = `/api/v1${fullPath.pathname}?offset=${current_offset * OFFEST_VAL}`;
+
+function addPaginationUI(data) {
+  if (!data.items.length > 0) return;
+  let ul = paginateNav.children[0];
+
+  let li = document.createElement("li");
+  li.className = "page-item disabled";
+  li.id = "previous-button";
+
+  let input = document.createElement("input");
+  input.type = "button";
+  input.value = "Previous";
+  input.className = "page-link";
+  input.tabIndex = -1;
+  input.setAttribute("aria-disabled", "true");
+
+  li.appendChild(input);
+
+  ul.appendChild(li);
+  for (let i = 0; i < 5 && i * OFFEST_VAL < data.total_count; i++) {
+    let listItem = document.createElement("li");
+    listItem.classList.add("page-item");
+
+    let input = document.createElement("input");
+    input.setAttribute("value", i + 1);
+    input.setAttribute("type", "button");
+    input.setAttribute("aria-disabled", "true");
+    input.classList.add("page-link");
+
+    if (i + 1 === 1) {
+      input.classList.add("active");
+    }
+
+    listItem.appendChild(input);
+
+    ul.appendChild(listItem);
+  }
+  li = document.createElement("li");
+  li.className = "page-item";
+
+  input = document.createElement("input");
+  input.type = "button";
+  input.value = "Next";
+  input.className = "page-link";
+  input.setAttribute("aria-disabled", "true");
+
+  li.appendChild(input);
+
+  ul.appendChild(li);
+}
+
 (async function () {
   let response;
   try {
@@ -11,14 +66,16 @@ fullPath = `/api/v1${fullPath.pathname}`;
   }
   try {
     let data = await response.json();
-    for (let i = 0; i < data.length; i++) {
+    let items = data.items;
+    for (let i = 0; i < items.length; i++) {
       let row = `<tr>
-                        <td>${data[i].email}</td>
-                        <td>${data[i].name}</td>
-                        <td>${data[i].created_at}</td>
+                        <td class='cell'>${items[i].email}</td>
+                        <td class='cell'>${items[i].name}</td>
+                        <td class='cell'>${items[i].created_at}</td>
                        </tr>`;
       table.innerHTML += row;
     }
+    addPaginationUI(data);
   } catch (e) {
     console.error(e);
   }
@@ -29,8 +86,6 @@ searchBtn.addEventListener("click", async (e) => {
   let email = document.getElementById("searchEmail").value;
   let startDate = document.getElementById("startDate").value;
   let endDate = document.getElementById("endDate").value;
-  let limit = document.getElementById("limit").value;
-  let offset = document.getElementById("offset").value;
 
   let queryParams = new URLSearchParams();
   if (name) {
@@ -46,12 +101,6 @@ searchBtn.addEventListener("click", async (e) => {
   if (endDate) {
     endDate = new Date(endDate).toISOString();
     queryParams.append("end_date", endDate);
-  }
-  if (limit) {
-    queryParams.append("limit", limit);
-  }
-  if (offset) {
-    queryParams.append("offset", offset);
   }
 
   let pathname = new URL(window.location.href).pathname;
