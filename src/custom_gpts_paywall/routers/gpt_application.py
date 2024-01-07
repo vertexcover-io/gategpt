@@ -14,6 +14,7 @@ from pydantic import (
     EmailStr,
 )
 from pydantic_core import Url
+from sqlalchemy import func
 from sqlalchemy.sql import and_
 import shortuuid
 from sqlalchemy.exc import IntegrityError
@@ -90,6 +91,12 @@ class GPTAPPSessionsResponseModel(BaseModel):
     created_at: datetime
 
 
+class GPTAPPSesssionPginatedModel(BaseModel):
+    items: list[GPTAPPSessionsResponseModel]
+    next_page_avialable: bool
+    total_count: int
+
+
 class UserSessionQueryModel(BaseModel):
     email: EmailStr | None = None
     name: str | None = None
@@ -97,7 +104,7 @@ class UserSessionQueryModel(BaseModel):
     end_datetime: datetime | None = None
 
     limit: int | None = None
-    offset: int | None = None
+    offset: int | None = 0
 
     @validator("limit")
     def set_max_limit(cls, v):
@@ -161,7 +168,7 @@ def register_custom_gpt_controller(
 
 @gpt_application_router.get(
     "/api/v1/custom-gpt-application/{gpt_application_id}/gpt-app-sessions",
-    response_model=list[GPTAPPSessionsResponseModel],
+    response_model=GPTAPPSesssionPginatedModel,
 )
 def gpt_app_users_sesssion(
     gpt_application_id: str,
@@ -204,21 +211,31 @@ def gpt_app_users_sesssion(
             GPTAppSession.created_at <= query_params.end_datetime,
         )
 
-    user_sessions = user_sessions_query.limit(query_params.limit)
+    total_count = (
+        session.query(func.count()).select_from(user_sessions_query.subquery()).scalar()
+    )
+    next_page_available = query_params.offset + query_params.limit < total_count  # type: ignore
+
+    user_sessions_query = user_sessions_query.limit(query_params.limit)
 
     if query_params.offset:
-        user_sessions = user_sessions_query.offset(query_params.offset)
+        user_sessions_query = user_sessions_query.offset(query_params.offset)
+
+    user_sessions = user_sessions_query.all()
+
     if not user_sessions:
         logger.info(
             f"No user sessions found for GPT app with uuid {gpt_application_id}"
         )
         return []
 
-    user_sessions_response = []
-    for i in user_sessions:
-        user_sessions_response.append(GPTAPPSessionsResponseModel.model_validate(i))
+    pagintaed_response = {
+        "items": user_sessions,
+        "total_count": total_count,
+        "next_page_avialable": next_page_available,
+    }
 
-    return user_sessions_response
+    return pagintaed_response
 
 
 @gpt_application_router.get(
