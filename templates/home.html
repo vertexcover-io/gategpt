@@ -1,72 +1,62 @@
 {% extends "base.html" %} {% block title %} Home {% endblock %} {% block body %}
-<body class="app">
-  <div class="container">
+<div class="container">
+  <div class="text-center">
+    <h1 class="mt-5">Welcome, {{ user_details }}</h1>
+  </div>
+
+  <br />
+  <br />
+  <section id="user-actions-section">
     <div class="text-center">
-      <h1 class="mt-5">Welcome, {{ user_details }}</h1>
+      <button
+        class="btn app-btn-primary mx-auto d-block"
+        onclick="redirectToGPTApplication()"
+      >
+        Register a New Custom GPT
+      </button>
     </div>
+  </section>
+</div>
 
-    <br />
-    <br />
-    <section id="user-actions-section">
-      <div class="text-center">
-        <button
-          class="btn app-btn-primary mx-auto d-block"
-          onclick="redirectToGPTApplication()"
-        >
-          Register a New Custom GPT
-        </button>
-      </div>
-    </section>
-  </div>
-
-  <div class="app-wrapper">
-    <div class="app-content pt-3 p-md-3 p-lg-4">
-      <div class="container-xl">
-        <div class="row g-3 mb-4 align-items-center justify-content-between">
-          <div class="col-auto">
-            <h1 class="app-page-title mb-0">List of Registered Custom GPTs</h1>
-          </div>
+<div class="app-wrapper">
+  <div class="app-content pt-3 p-md-3 p-lg-4">
+    <div class="container-xl">
+      <div class="row g-3 mb-4 align-items-center justify-content-between">
+        <div class="col-auto">
+          <h1 class="app-page-title mb-0">List of Registered Custom GPTs</h1>
         </div>
+      </div>
 
-        <div class="row g-4">
-          {% for application in gpt_applications %}
-          <div class="col-6 col-md-4 col-xl-3 col-xxl-2">
-            <a href="{{ application.gpt_url }}">
-              <div class="app-card app-card-doc shadow-sm h-100">
-                <div class="app-card-body p-3 has-card-actions">
-                  <h4 class="app-doc-title truncate mb-0">
-                    {{ application.gpt_name }}
-                  </h4>
-                  <div class="app-doc-meta">
-                    <ul class="list-unstyled mb-0">
-                      <li>
-                        <span class="text-muted">Description:</span> {{
-                        application.gpt_description }}
-                      </li>
-                    </ul>
-                  </div>
-                  <!--//app-doc-meta-->
+      <div class="row g-4">
+        {% for application in gpt_applications %}
+        <div class="col-6 col-md-4 col-xl-3 col-xxl-2">
+          <a href="{{ application.gpt_url }}">
+            <div class="app-card app-card-doc shadow-sm h-100">
+              <div class="app-card-body p-3 has-card-actions">
+                <h4 class="app-doc-title truncate mb-0">
+                  {{ application.gpt_name }}
+                </h4>
+                <div class="app-doc-meta">
+                  <ul class="list-unstyled mb-0">
+                    <li>
+                      <span class="text-muted">Description:</span> {{
+                      application.gpt_description }}
+                    </li>
+                  </ul>
                 </div>
-                <!--//app-card-body-->
               </div>
-              <!--//app-card-->
-            </a>
-          </div>
-          <!--//col-->
-          {% endfor %}
+            </div>
+          </a>
         </div>
-        <!--//row-->
+        {% endfor %}
       </div>
-      <!--//container-xl-->
     </div>
-    <!--//app-content-->
   </div>
-  <!--//app-wrapper-->
+</div>
 
-  <script>
-    function redirectToGPTApplication() {
-      window.location.href = "/custom-gpt-application";
-    }
-  </script>
-</body>
+<script>
+  function redirectToGPTApplication() {
+    window.location.href = "/custom-gpt-application";
+  }
+</script>
 {% endblock %}
