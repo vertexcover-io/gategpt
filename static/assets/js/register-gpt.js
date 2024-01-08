@@ -39,6 +39,6 @@ submitButton.addEventListener("click", async (e) => {
     gpt_name: gptName,
     gpt_url: gptUrl,
     gpt_description: gptDescription,
-    verification_medium: "Google",
+    verification_medium: "google",
   });
 });
