@@ -1,13 +1,70 @@
 let table = document.getElementById("sessionsTable");
 let searchBtn = document.getElementById("searchBtn");
 let fullPath = new URL(window.location.href);
-let current_offset = 0;
+let currentOffset = 0;
 let OFFEST_VAL = 20;
 let paginateNav = document.getElementById("app-pagination");
 let paginateUl = paginateNav.children[0];
 let navOffset;
+let total_count;
+let previous;
+let next;
 
-fullPath = `/api/v1${fullPath.pathname}?offset=${current_offset * OFFEST_VAL}`;
+table.removeAttribute;
+
+fullPath = `/api/v1${fullPath.pathname}?offset=${currentOffset * OFFEST_VAL}`;
+
+function addClass(n, className) {
+  if (n.classList.contains(className)) return;
+  n.classList.add(className);
+}
+
+function addAttr(n, attrName, value) {
+  if (n.hasAttribute(attrName)) return;
+  n.setAttribute(attrName, value);
+}
+function removeClass(n, className) {
+  if (!n.classList.contains(className)) return;
+  console.log("removing class");
+  n.classList.remove(className);
+}
+
+function removeAttr(n, attrName) {
+  if (!n.hasAttribute(attrName)) return;
+  n.removeAttribute(attrName);
+}
+
+async function updatePagination() {}
+
+async function handlePaginationUI(e) {
+  paginateUl.childNodes.forEach((li) => {
+    let input = li.querySelector("input");
+    if (input && !parseInt(input.value)) return;
+    li.classList.remove("active");
+  });
+  if (e.value !== "Previous" || e.target.value !== "Next") {
+    e.parentNode.classList.add("active");
+  }
+  if (navOffset === 1) {
+    addClass(previous.parentNode, "disabled");
+    addAttr(previous, "disabled", "true");
+  } else {
+    removeClass(previous.parentNode, "disabled");
+    removeAttr(previous, "disabled");
+  }
+  if (currentOffset * 20 > total_count) {
+    addClass(next.parentNode, "disabled");
+    addAttr(next, "disabled", "true");
+  } else {
+    removeClass(next.parentNode, "disabled");
+    removeAttr(next, "disabled");
+  }
+  currentOffset = parseInt(e.value) - 1;
+  console.log(currentOffset);
+  if (currentOffset >= 4 && currentOffset * 20 < total_count) {
+    console.log("update avialable");
+  }
+}
 
 function addPaginationUI(data) {
   if (!data.items.length > 0) return;
@@ -17,24 +74,13 @@ function addPaginationUI(data) {
   li.id = "previous-button";
 
   let input = document.createElement("input");
-  input.addEventListener("click", async () => {
-    paginateUl.children[navOffset].classList.remove("active");
-    if (navOffset != 1) navOffset--;
-
-    if (navOffset == 1) paginateUl.children[0].classList.add("disabled");
-
-    paginateUl.children[paginateUl.children.length - 1].classList.remove(
-      "disabled",
-    );
-    console.log(paginateUl.children[paginateUl.children.length - 1]);
-    paginateUl.children[navOffset].classList.add("active");
-  });
   input.type = "button";
   input.value = "Previous";
   input.className = "page-link";
   input.tabIndex = -1;
-  input.setAttribute("aria-disabled", "true");
+  input.setAttribute("disabled", "true");
   navOffset = 1;
+  previous = input;
 
   li.appendChild(input);
 
@@ -46,7 +92,6 @@ function addPaginationUI(data) {
     let input = document.createElement("input");
     input.setAttribute("value", i + 1);
     input.setAttribute("type", "button");
-    input.setAttribute("aria-disabled", "true");
     input.classList.add("page-link");
 
     if (i + 1 === 1) {
@@ -64,25 +109,37 @@ function addPaginationUI(data) {
   input.type = "button";
   input.value = "Next";
   input.className = "page-link";
-  input.setAttribute("aria-disabled", "true");
-
-  input.addEventListener("click", async (e) => {
-    paginateUl.children[navOffset].classList.remove("active");
-    if (navOffset == 1) {
-      paginateUl.children[0].classList.remove("disabled");
-    }
-    if (navOffset < paginateUl.children.length - 2) {
-      navOffset++;
-    }
-    if (paginateUl.children[navOffset + 1].children[0].value === "Next") {
-      paginateUl.children[navOffset + 1].classList.add("disabled");
-    }
-    paginateUl.children[navOffset].classList.add("active");
-  });
+  // input.setAttribute("disabled", "true");
+  next = input;
 
   li.appendChild(input);
 
   paginateUl.appendChild(li);
+  paginateUl.childNodes.forEach((element) => {
+    element.addEventListener("click", async (e) => {
+      let toClick;
+      if (e.target.children.length) {
+        if (e.target.children[0].getAttribute("disabled") === "true") {
+          return;
+        }
+      }
+      if (e.target.value === "Next") {
+        if (navOffset < paginateUl.children.length - 2) {
+          ++navOffset;
+        }
+        toClick = paginateUl.children[navOffset].children[0];
+      } else if (e.target.value == "Previous") {
+        if (navOffset !== 1) {
+          --navOffset;
+        }
+        toClick = paginateUl.children[navOffset].children[0];
+      } else {
+        navOffset = parseInt(e.target.value);
+        toClick = e.target;
+      }
+      handlePaginationUI(toClick);
+    });
+  });
 }
 
 (async function () {
@@ -95,6 +152,7 @@ function addPaginationUI(data) {
   try {
     let data = await response.json();
     let items = data.items;
+    total_count = data.total_count;
     for (let i = 0; i < items.length; i++) {
       let row = `<tr>
 					<td class='cell'>${items[i].email}</td>
