@@ -92,7 +92,6 @@ class GPTAPPSessionsResponseModel(BaseModel):
 
 class GPTAPPSesssionPaginatedModel(BaseModel):
     items: list[GPTAPPSessionsResponseModel]
-    next_page_avialable: bool
     total_count: int
 
 
@@ -226,7 +225,6 @@ def gpt_app_users_sesssion(
     total_count = (
         session.query(func.count()).select_from(user_sessions_query.subquery()).scalar()
     )
-    next_page_available = query_params.offset + query_params.limit < total_count  # type: ignore
 
     user_sessions_query = user_sessions_query.limit(query_params.limit)
 
@@ -243,7 +241,6 @@ def gpt_app_users_sesssion(
     pagintaed_response = {
         "items": user_sessions,
         "total_count": total_count,
-        "next_page_avialable": next_page_available,
     }
 
     return pagintaed_response
