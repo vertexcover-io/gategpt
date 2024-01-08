@@ -6,7 +6,7 @@ let OFFEST_VAL = 20;
 let paginateNav = document.getElementById("app-pagination");
 let paginateUl = paginateNav.children[0];
 let navOffset;
-let total_count;
+let totalCount;
 let previous;
 let next;
 
@@ -25,7 +25,6 @@ function addAttr(n, attrName, value) {
 }
 function removeClass(n, className) {
   if (!n.classList.contains(className)) return;
-  console.log("removing class");
   n.classList.remove(className);
 }
 
@@ -34,8 +33,47 @@ function removeAttr(n, attrName) {
   n.removeAttribute(attrName);
 }
 
-async function updatePagination() {}
+async function increasePagination() {
+  while (paginateUl.childNodes.length > 3) {
+    paginateUl.removeChild(paginateUl.childNodes[1]);
+  }
+  for (let i = 0, value = currentOffset + 2; i < 5; i++, value = value + 1) {
+    let listItem = document.createElement("li");
+    listItem.classList.add("page-item");
 
+    let input = document.createElement("input");
+    input.setAttribute("value", value);
+    input.setAttribute("type", "button");
+    input.classList.add("page-link");
+    input.addEventListener("click", (e) => handlePaginationUI(e.target));
+
+    listItem.appendChild(input);
+    paginateUl.insertBefore(listItem, next.parentNode);
+    if (value * OFFEST_VAL > totalCount) break;
+  }
+  navOffset = 1;
+}
+
+async function decreasePagination() {
+  while (paginateUl.childNodes.length > 3) {
+    paginateUl.removeChild(paginateUl.childNodes[2]);
+  }
+  let elemn = paginateUl.childNodes[1];
+  for (let i = 0, value = currentOffset - 3; i < 4; i++, value = value + 1) {
+    let listItem = document.createElement("li");
+    listItem.classList.add("page-item");
+
+    let input = document.createElement("input");
+    input.setAttribute("value", value);
+    input.setAttribute("type", "button");
+    input.classList.add("page-link");
+    input.addEventListener("click", (e) => handlePaginationUI(e.target));
+
+    listItem.appendChild(input);
+    paginateUl.insertBefore(listItem, elemn);
+  }
+  navOffset = 5;
+}
 async function handlePaginationUI(e) {
   paginateUl.childNodes.forEach((li) => {
     let input = li.querySelector("input");
@@ -45,24 +83,40 @@ async function handlePaginationUI(e) {
   if (e.value !== "Previous" || e.target.value !== "Next") {
     e.parentNode.classList.add("active");
   }
-  if (navOffset === 1) {
+
+  for (let i = 1; i <= 5; i++) {
+    let li = paginateUl.children[i];
+    if (li.classList.contains("active")) {
+      navOffset = i;
+      break;
+    }
+  }
+  currentOffset = parseInt(e.value) - 1;
+  if (currentOffset == 0) {
     addClass(previous.parentNode, "disabled");
     addAttr(previous, "disabled", "true");
   } else {
     removeClass(previous.parentNode, "disabled");
     removeAttr(previous, "disabled");
   }
-  if (currentOffset * 20 > total_count) {
+  if (currentOffset * 20 > totalCount) {
     addClass(next.parentNode, "disabled");
     addAttr(next, "disabled", "true");
   } else {
     removeClass(next.parentNode, "disabled");
     removeAttr(next, "disabled");
   }
-  currentOffset = parseInt(e.value) - 1;
-  console.log(currentOffset);
-  if (currentOffset >= 4 && currentOffset * 20 < total_count) {
-    console.log("update avialable");
+  if (
+    currentOffset >= 4 &&
+    currentOffset * OFFEST_VAL < totalCount &&
+    navOffset == 5
+  ) {
+    increasePagination();
+    return;
+  }
+  if (currentOffset >= 4 && navOffset == 1) {
+    decreasePagination();
+    return;
   }
 }
 
@@ -86,6 +140,7 @@ function addPaginationUI(data) {
 
   paginateUl.appendChild(li);
   for (let i = 0; i < 5 && i * OFFEST_VAL < data.total_count; i++) {
+    if (i * 20 > totalCount) break;
     let listItem = document.createElement("li");
     listItem.classList.add("page-item");
 
@@ -109,7 +164,10 @@ function addPaginationUI(data) {
   input.type = "button";
   input.value = "Next";
   input.className = "page-link";
-  // input.setAttribute("disabled", "true");
+  if (!paginateUl.children.length >= 6) {
+    input.setAttribute("disabled", "true");
+  }
+
   next = input;
 
   li.appendChild(input);
@@ -134,7 +192,6 @@ function addPaginationUI(data) {
         }
         toClick = paginateUl.children[navOffset].children[0];
       } else {
-        navOffset = parseInt(e.target.value);
         toClick = e.target;
       }
       handlePaginationUI(toClick);
@@ -152,7 +209,7 @@ function addPaginationUI(data) {
   try {
     let data = await response.json();
     let items = data.items;
-    total_count = data.total_count;
+    totalCount = data.total_count;
     for (let i = 0; i < items.length; i++) {
       let row = `<tr>
 					<td class='cell'>${items[i].email}</td>
