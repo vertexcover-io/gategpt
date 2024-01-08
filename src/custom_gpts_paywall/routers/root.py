@@ -54,8 +54,6 @@ def root(
 ):
     user_details = current_user.email
     gpt_applications = current_user.custom_gpt_applications
-    logger.info(gpt_applications)
-    logger.info(user_details)
     logger.info("Root endpoint hit")
     return templates.TemplateResponse(
         "home.html",

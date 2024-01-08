@@ -1,6 +1,7 @@
 from authlib.integrations.base_client import OAuthError
 
 # from authlib.jose.rfc7519 import jwt
+from pydantic import BaseModel, Field
 from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse, HTMLResponse
 from custom_gpts_paywall.config import JWT_ENCODE_ALGORITHM
@@ -16,15 +17,20 @@ from custom_gpts_paywall.utils import url_for, utcnow
 from fastapi import Depends
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from datetime import timedelta
+from custom_gpts_paywall.config import templates
+
+import shortuuid
 
 import jwt
 
 
-from fastapi.templating import Jinja2Templates
-
 auth_router = APIRouter()
 
-templates = Jinja2Templates(directory="templates")
+
+class UserResponseModel(BaseModel):
+    uuid: str = Field(default_factory=shortuuid.uuid)
+    name: str
+    email: str
 
 
 @auth_router.get(
@@ -60,6 +66,11 @@ def create_jwt_token(user_email: str, secret_key: str, expires_in: timedelta):
 @auth_router.get("/p1")
 async def protected_route(current_user: dict = Depends(get_current_user)):
     return {"message": "You are authorized, welcome!", "user": current_user}
+
+
+@auth_router.get("/api/v1/user/profile", response_model=UserResponseModel)
+async def user_profile(current_user: dict = Depends(get_current_user)):
+    return current_user
 
 
 @auth_router.get("/oauth/callback/google", name="oauth_callback_google")
