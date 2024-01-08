@@ -41,7 +41,7 @@ class EnvConfig(BaseModel):
     min_delay_between_verification: timedelta
     email_from: str
     instruction_prompt: str = Field(default=DEFAULT_INSTRUCTION_PROMPT)
-    domain_url: str = Field(default="http://localhost:8000")
+    domain_url: str = Field(default="https://gategpt.co")
     google_oauth_client_id: str
     google_oauth_client_secret: str
     db_engine: Engine = Field(default=None)
