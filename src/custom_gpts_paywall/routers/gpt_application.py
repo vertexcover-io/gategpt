@@ -11,10 +11,9 @@ from pydantic import (
     StringConstraints,
     UrlConstraints,
     validator,
-    EmailStr,
 )
 from pydantic_core import Url
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.sql import and_
 import shortuuid
 from sqlalchemy.exc import IntegrityError
@@ -98,7 +97,7 @@ class GPTAPPSesssionPaginatedModel(BaseModel):
 
 
 class UserSessionQueryModel(BaseModel):
-    email: EmailStr | None = None
+    email: str | None = None
     name: str | None = None
     start_datetime: datetime | None = None
     end_datetime: datetime | None = None
@@ -193,13 +192,20 @@ def gpt_app_users_sesssion(
         )
     )
 
-    if query_params.name:
+    if query_params.name and query_params.email:
         user_sessions_query = user_sessions_query.filter(
-            GPTAppSession.name == query_params.name
+            or_(
+                GPTAppSession.name.contains(query_params.name),
+                GPTAppSession.email.contains(query_params.email),
+            )
         )
-    if query_params.email:
+    elif query_params.name:
         user_sessions_query = user_sessions_query.filter(
-            GPTAppSession.email == query_params.email
+            GPTAppSession.name.contains(query_params.name)
+        )
+    elif query_params.email:
+        user_sessions_query = user_sessions_query.filter(
+            GPTAppSession.email.containts(query_params.email)
         )
     if query_params.start_datetime and query_params.end_datetime:
         user_sessions_query = user_sessions_query.filter(
