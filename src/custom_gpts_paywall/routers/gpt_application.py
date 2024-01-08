@@ -268,6 +268,7 @@ def gpt_applications(
     "/custom-gpt-application",
     response_class=HTMLResponse,
     name="register_custom_gpt_app_page",
+    include_in_schema=False,
 )
 async def gpt_application_registration_view(
     request: Request,

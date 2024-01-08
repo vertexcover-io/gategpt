@@ -4,17 +4,20 @@ from authlib.integrations.base_client import OAuthError
 from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse, HTMLResponse
 from custom_gpts_paywall.config import JWT_ENCODE_ALGORITHM
-from custom_gpts_paywall.dependencies import ConfigDep, DbSession, LoggerDep
+from custom_gpts_paywall.dependencies import (
+    ConfigDep,
+    DbSession,
+    LoggerDep,
+    get_current_user,
+)
 from custom_gpts_paywall.models import User
 from custom_gpts_paywall.utils import url_for, utcnow
 
-from fastapi import Depends, Cookie
+from fastapi import Depends
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from datetime import timedelta
 
 import jwt
-from authlib.jose.errors import DecodeError
-from fastapi.exceptions import HTTPException
 
 
 from fastapi.templating import Jinja2Templates
@@ -24,12 +27,14 @@ auth_router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 
-@auth_router.get("/login", name="login_page", response_class=HTMLResponse)
+@auth_router.get(
+    "/login", name="login_page", response_class=HTMLResponse, include_in_schema=False
+)
 def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
 
-@auth_router.get("/login/failed", response_class=HTMLResponse)
+@auth_router.get("/login/failed", response_class=HTMLResponse, include_in_schema=False)
 def login_failure(request: Request):
     return templates.TemplateResponse("login_fail.html", {"request": request})
 
@@ -52,39 +57,6 @@ def create_jwt_token(user_email: str, secret_key: str, expires_in: timedelta):
     return jwt.encode(payload, secret_key, algorithm=JWT_ENCODE_ALGORITHM)
 
 
-def get_current_user(
-    config: ConfigDep,
-    logger: LoggerDep,
-    session: DbSession,
-    jwt_token: str = Cookie(None),
-):
-    credentials_exception = HTTPException(
-        status_code=401,
-        detail="Not authorized :(",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    if jwt_token:
-        secret_key_bytes = config.secret_key.encode("utf-8")
-
-        try:
-            payload = jwt.decode(
-                jwt_token, secret_key_bytes, algorithms=JWT_ENCODE_ALGORITHM
-            )
-            user_email = payload.get("sub")
-
-            if user_email:
-                user = session.query(User).filter_by(email=user_email).first()
-            else:
-                raise HTTPException(status_code=401, detail="Invalid token")
-            return user
-        except DecodeError:
-            raise HTTPException(status_code=401, detail="Invalid token or signature")
-    else:
-        raise credentials_exception
-
-
-# test route
 @auth_router.get("/p1")
 async def protected_route(current_user: dict = Depends(get_current_user)):
     return {"message": "You are authorized, welcome!", "user": current_user}
