@@ -16,11 +16,20 @@ block body %}
               <div class="col-auto">
                 <input
                   type="text"
-                  id="search-orders"
+                  id="searchNameEmail"
                   name="searchorders"
                   class="form-control search-orders"
                   placeholder="email or name"
                 />
+              </div>
+              Starting from:
+              <div class="col container">
+                <input type="datetime-local" class="datetime-input" />
+              </div>
+
+              Ending at:
+              <div class="col">
+                <input type="datetime-local" class="datetime-input" />
               </div>
               <div class="col-auto">
                 <button
@@ -72,4 +81,13 @@ block body %}
 </div>
 
 <script src="{{ url_for('static', path = '/assets/js/gpt-app-sessions.js') }}"></script>
+<style>
+  .datetime-input {
+    font-size: 0.7rem; /* Smaller font size */
+    padding: 0.25rem 0.5rem; /* Reduced padding */
+    height: calc(1.5em + 0.5rem + 2px); /* Smaller height */
+    border-radius: 0.2rem; /* Slightly rounded borders for a subtle look */
+    border: 1px solid #ced4da; /* Default Bootstrap border color */
+  }
+</style>
 {% endblock %}
