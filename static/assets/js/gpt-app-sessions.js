@@ -5,14 +5,14 @@ let currentOffset = 0;
 let OFFEST_VAL = 20;
 let paginateNav = document.getElementById("app-pagination");
 let paginateUl = paginateNav.children[0];
-let navOffset;
+let navOffset = 1;
 let totalCount;
 let previous;
 let next;
 
 table.removeAttribute;
 
-fullPath = `/api/v1${fullPath.pathname}?offset=${currentOffset * OFFEST_VAL}`;
+fullPath = `/api/v1${fullPath.pathname}`;
 
 function addClass(n, className) {
   if (n.classList.contains(className)) return;
@@ -92,39 +92,31 @@ async function handlePaginationUI(e) {
     }
   }
   currentOffset = parseInt(e.value) - 1;
-  if (currentOffset == 0) {
-    addClass(previous.parentNode, "disabled");
-    addAttr(previous, "disabled", "true");
-  } else {
-    removeClass(previous.parentNode, "disabled");
-    removeAttr(previous, "disabled");
-  }
-  if (currentOffset * 20 > totalCount) {
-    addClass(next.parentNode, "disabled");
-    addAttr(next, "disabled", "true");
-  } else {
-    removeClass(next.parentNode, "disabled");
-    removeAttr(next, "disabled");
-  }
   if (
     currentOffset >= 4 &&
     currentOffset * OFFEST_VAL < totalCount &&
     navOffset == 5
   ) {
     increasePagination();
-    return;
   }
   if (currentOffset >= 4 && navOffset == 1) {
     decreasePagination();
-    return;
   }
+  await apiSearch();
 }
 
 function addPaginationUI(data) {
   if (!data.items.length > 0) return;
 
+  while (paginateUl.childNodes.length) {
+    paginateUl.removeChild(paginateUl.childNodes[0]);
+  }
+
   let li = document.createElement("li");
-  li.className = "page-item disabled";
+  li.className = "page-item";
+  if (currentOffset == 0) {
+    li.classList.add("disabled");
+  }
   li.id = "previous-button";
 
   let input = document.createElement("input");
@@ -133,7 +125,6 @@ function addPaginationUI(data) {
   input.className = "page-link";
   input.tabIndex = -1;
   input.setAttribute("disabled", "true");
-  navOffset = 1;
   previous = input;
 
   li.appendChild(input);
@@ -149,7 +140,8 @@ function addPaginationUI(data) {
     input.setAttribute("type", "button");
     input.classList.add("page-link");
 
-    if (i + 1 === 1) {
+    if (i == navOffset - 1) {
+      console.log("here");
       listItem.classList.add("active");
     }
 
@@ -164,7 +156,10 @@ function addPaginationUI(data) {
   input.type = "button";
   input.value = "Next";
   input.className = "page-link";
-  if (!paginateUl.children.length >= 6) {
+
+  console.log(paginateUl.children.length, currentOffset * 20);
+  if (currentOffset * OFFEST_VAL > totalCount) {
+    li.classList.add("disabled");
     input.setAttribute("disabled", "true");
   }
 
@@ -199,43 +194,15 @@ function addPaginationUI(data) {
   });
 }
 
-(async function () {
-  let response;
-  try {
-    response = await fetch(fullPath);
-  } catch (e) {
-    console.error(e);
-  }
-  try {
-    let data = await response.json();
-    let items = data.items;
-    totalCount = data.total_count;
-    for (let i = 0; i < items.length; i++) {
-      let row = `<tr>
-					<td class='cell'>${items[i].email}</td>
-					<td class='cell'>${items[i].name}</td>
-					<td class='cell'>${items[i].created_at}</td>
-				   </tr>`;
-      table.innerHTML += row;
-    }
-    addPaginationUI(data);
-  } catch (e) {
-    console.error(e);
-  }
-})();
-
-async function apiSearch() {
-  let name = document.getElementById("searchName").value;
-  let email = document.getElementById("searchEmail").value;
+function getQueryParams() {
+  let nameEmail = document.getElementById("searchNameEmail").value;
   let startDate = document.getElementById("startDate").value;
   let endDate = document.getElementById("endDate").value;
 
   let queryParams = new URLSearchParams();
-  if (name) {
-    queryParams.append("name", name);
-  }
-  if (email) {
-    queryParams.append("email", email);
+  if (nameEmail) {
+    queryParams.append("name", nameEmail);
+    queryParams.append("email", nameEmail);
   }
   if (startDate) {
     startDate = new Date(startDate).toISOString();
@@ -245,6 +212,13 @@ async function apiSearch() {
     endDate = new Date(endDate).toISOString();
     queryParams.append("end_date", endDate);
   }
+  if (currentOffset) {
+    queryParams.append("offset", currentOffset * 20);
+  }
+  return queryParams;
+}
+async function apiSearch() {
+  let queryParams = getQueryParams();
 
   let pathname = new URL(window.location.href).pathname;
   let fullPath = `/api/v1${pathname}?${queryParams.toString()}`;
@@ -255,6 +229,8 @@ async function apiSearch() {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     let data = await response.json();
+    let items = data.items;
+    totalCount = items.total_count;
 
     let tableBody = table.getElementsByTagName("tbody");
     let tableRows = table.getElementsByTagName("tr");
@@ -262,19 +238,23 @@ async function apiSearch() {
       table.removeChild(tableBody[i]);
     }
 
-    data.forEach((session) => {
+    items.forEach((session) => {
       let row = `<tr>
-                        <td>${session.email}</td>
-                        <td>${session.name}</td>
-                        <td>${session.created_at}</td>
+                        <td class = 'cell'>${session.email}</td>
+                        <td class = 'cell'>${session.name}</td>
+                        <td class = 'cell'>${session.created_at}</td>
                        </tr>`;
       table.innerHTML += row;
     });
+    addPaginationUI(data);
   } catch (error) {
     console.error("Error:", error);
   }
 }
 
 searchBtn.addEventListener("click", async (e) => {
+  e.preventDefault();
   await apiSearch();
 });
+
+apiSearch();
