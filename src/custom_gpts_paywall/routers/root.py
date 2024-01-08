@@ -52,15 +52,11 @@ async def privacy_policy():
 def root(
     request: Request, logger: LoggerDep, current_user: User = Depends(login_required)
 ):
-    user_details = current_user.email
-    gpt_applications = current_user.custom_gpt_applications
     logger.info("Root endpoint hit")
     return templates.TemplateResponse(
         "home.html",
         {
             "request": request,
-            "user_details": user_details,
-            "gpt_applications": gpt_applications,
         },
     )
 

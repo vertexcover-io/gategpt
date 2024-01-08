@@ -1,7 +1,7 @@
 {% extends "base.html" %} {% block title %} Home {% endblock %} {% block body %}
 <div class="container">
   <div class="text-center">
-    <h1 class="mt-5">Welcome, {{ user_details }}</h1>
+    <h1 class="mt-5" id="welcome-h1">Welcome,</h1>
   </div>
 
   <br />
@@ -26,29 +26,7 @@
       </div>
     </div>
 
-    <div class="row g-4">
-      {% for application in gpt_applications %}
-      <div class="col-6 col-md-4 col-xl-3 col-xxl-2">
-        <a href="{{ application.gpt_url }}">
-          <div class="app-card app-card-doc shadow-sm h-100">
-            <div class="app-card-body p-3 has-card-actions">
-              <h4 class="app-doc-title truncate mb-0">
-                {{ application.gpt_name }}
-              </h4>
-              <div class="app-doc-meta">
-                <ul class="list-unstyled mb-0">
-                  <li>
-                    <span class="text-muted">Description:</span> {{
-                    application.gpt_description }}
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </a>
-      </div>
-      {% endfor %}
-    </div>
+    <div class="row g-4"></div>
   </div>
 </div>
 
@@ -57,4 +35,8 @@
     window.location.href = "/custom-gpt-application";
   }
 </script>
+<script
+  type="module"
+  src="{{ url_for('static', path = '/assets/js/home.js') }}"
+></script>
 {% endblock %}
