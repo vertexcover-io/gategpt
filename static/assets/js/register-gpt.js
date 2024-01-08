@@ -35,11 +35,10 @@ submitButton.addEventListener("click", async (e) => {
   let gptName = document.getElementById("gpt-name").value;
   let gptDescription = document.getElementById("gpt-description").value;
   let gptUrl = document.getElementById("gpt-url").value;
-  let verificationMedium = document.getElementById("verification-medium").value;
   await postGPTApp({
     gpt_name: gptName,
     gpt_url: gptUrl,
     gpt_description: gptDescription,
-    verification_medium: verificationMedium,
+    verification_medium: "Google",
   });
 });
