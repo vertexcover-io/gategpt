@@ -1,36 +1,28 @@
-{% extends "base.html" %} {% block title %} Gpt App Sessions {% endblock %} {%
-block body %}
-<div class="app-content pt-3 p-md-3 p-lg-4">
-  <div class="container-xl">
-    <hr class="mb-4" />
-    <div class="row g-4 settings-section">
-      <div class="col-12 col-md-4">
-        <h1 class="app-page-title">Create A new GPT app</h1>
-      </div>
-      <div id="error" role="alert" style="display: none"></div>
-      <div class="app-card-body">
-        <form class="settings-form">
-          <div class="mb-3">
-            <label for="setting-input-1" class="form-label">GPT Name</label>
-            <input type="text" class="form-control" id="gpt-name" required />
-          </div>
-          <div class="mb-3">GPT description</div>
-          <textarea
-            class="form-control"
-            id="gpt-description"
-            rows="3"
-          ></textarea>
-          <div class="mb-3">GPT URL</div>
-          <input type="url" class="form-control" id="gpt-url" required />
-          <div class="mb-3"></div>
-          <button type="submit" class="btn app-btn-primary">
-            Save Changes
-          </button>
-        </form>
-      </div>
+{% extends "base.html" %} {% block title %} Register GPT {% endblock %} {% block
+body %}
+<div class="container-xl">
+  <hr class="mb-4" />
+  <div class="row g-4 settings-section">
+    <div class="col-12 col-md-4">
+      <h1 class="app-page-title">Create A new GPT app</h1>
     </div>
-    <hr class="my-4" />
+    <div id="error" role="alert" style="display: none"></div>
+    <div class="app-card-body">
+      <form class="settings-form">
+        <div class="mb-3">
+          <label for="setting-input-1" class="form-label">GPT Name</label>
+          <input type="text" class="form-control" id="gpt-name" required />
+        </div>
+        <div class="mb-3">GPT description</div>
+        <textarea class="form-control" id="gpt-description" rows="3"></textarea>
+        <div class="mb-3">GPT URL</div>
+        <input type="url" class="form-control" id="gpt-url" required />
+        <div class="mb-3"></div>
+        <button type="submit" class="btn app-btn-primary">Save Changes</button>
+      </form>
+    </div>
   </div>
+  <hr class="my-4" />
 </div>
 <script src="{{ url_for('static', path = '/assets/js/register-gpt.js') }}"></script>
 {% endblock %}
