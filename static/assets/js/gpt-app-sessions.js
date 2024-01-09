@@ -247,7 +247,7 @@ async function apiSearch() {
       let row = `<tr>
                         <td class = 'cell'>${session.email}</td>
                         <td class = 'cell'>${session.name}</td>
-                        <td class = 'cell'>${created_at.fromNow()}</td>
+                        <td class = 'cell' data-toggle = "tooltip" data-placement = "top" title = "${created_at}">${created_at.fromNow()}</td>
                        </tr>`;
       table.innerHTML += row;
     });
