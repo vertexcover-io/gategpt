@@ -68,14 +68,18 @@
                     aria-expanded="false"
                     ><img
                       src="{{ url_for('static', path = '/profile-pictures/1.svg') }}"
-                      alt="user profile"
+                      id="user-porfile-picture"
                   /></a>
                   <ul
                     class="dropdown-menu"
                     aria-labelledby="user-dropdown-toggle"
                   >
                     <li>
-                      <a class="dropdown-item" href="login.html">Log Out</a>
+                      <a
+                        class="dropdown-item"
+                        href="{{ url_for('auth_logout' )}}"
+                        >Log Out</a
+                      >
                     </li>
                   </ul>
                 </div>
