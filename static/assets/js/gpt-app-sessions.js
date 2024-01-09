@@ -243,11 +243,12 @@ async function apiSearch() {
 
     items.forEach((session) => {
       let created_at = moment(session.created_at);
+      let created_at_formatted = created_at.format("YYYY-MM-DD HH:mm:ss");
 
       let row = `<tr>
                         <td class = 'cell'>${session.email}</td>
                         <td class = 'cell'>${session.name}</td>
-                        <td class = 'cell' data-toggle = "tooltip" data-placement = "top" title = "${created_at}">${created_at.fromNow()}</td>
+                        <td class = 'cell' data-toggle = "tooltip" data-placement = "top" title = "${created_at_formatted}">${created_at.fromNow()}</td>
                        </tr>`;
       table.innerHTML += row;
     });
