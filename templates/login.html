@@ -37,7 +37,12 @@
         <div class="app-auth-body mx-auto">
           <div class="app-auth-branding mb-4">
             <!-- replace with ladning page and app logo -->
-            <a href="index.html"></a>
+            <a href="index.html">
+              <img
+                src="{{ url_for('static', path = 'logo/svg/logo-color.svg') }}"
+                height="100px"
+              />
+            </a>
           </div>
           <h2 class="auth-heading text-center mb-5">Log in to GateGPT</h2>
           <div class="auth-form-container text-start">

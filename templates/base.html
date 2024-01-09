@@ -43,15 +43,41 @@
         <div class="container-fluid py-2">
           <div class="app-header-content">
             <div class="row justify-content-between align-items-center">
-              <!-- todo: move this to the right -->
               <div class="col-auto ml-auto">
+                <div class="app-utility-item">
+                  <a href="{{ url_for('root') }}">
+                    <img
+                      src="{{ url_for('static', path = 'logo/svg/logo-no-background.svg') }}"
+                      style="
+                        height: 40px;
+                        object-fit: contain;
+                        margin-left: 10rem;
+                      "
+                    />
+                  </a>
+                </div>
+              </div>
+              <div class="app-utilities col-auto">
                 <div class="app-utility-item app-user-dropdown dropdown">
-                  <img
-                    src="https://xsgames.co/randomusers/assets/avatars/pixel/51.jpg"
-                    class="profile-image"
-                    height="40px"
-                    width="40px"
-                  />
+                  <a
+                    class="dropdown-toggle"
+                    id="user-dropdown-toggle"
+                    data-bs-toggle="dropdown"
+                    href="#"
+                    role="button"
+                    aria-expanded="false"
+                    ><img
+                      src="{{ url_for('static', path = '/profile-pictures/1.svg') }}"
+                      alt="user profile"
+                  /></a>
+                  <ul
+                    class="dropdown-menu"
+                    aria-labelledby="user-dropdown-toggle"
+                  >
+                    <li>
+                      <a class="dropdown-item" href="login.html">Log Out</a>
+                    </li>
+                  </ul>
                 </div>
               </div>
             </div>
