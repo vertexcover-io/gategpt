@@ -14,7 +14,6 @@ from pydantic import (
 )
 from pydantic_core import Url
 from sqlalchemy import func, or_
-from sqlalchemy.sql import and_
 import shortuuid
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -168,13 +167,31 @@ def register_custom_gpt_controller(
     "/api/v1/custom-gpt-application/{gpt_application_id}/gpt-app-sessions",
     response_model=GPTAPPSesssionPaginatedModel,
 )
-def gpt_app_users_sesssion(
+def gpt_app_users_session(
     gpt_application_id: str,
     session: DbSession,
     logger: LoggerDep,
     query_params: UserSessionQueryModel = Depends(),
     user: User = Depends(get_current_user),
 ):
+    gpt_app = (
+        session.query(CustomGPTApplication)
+        .filter(
+            CustomGPTApplication.uuid == gpt_application_id,
+            CustomGPTApplication.user_id == user.id,
+        )
+        .first()
+    )
+
+    if not gpt_app:
+        logger.error(
+            f"Unauthorized access attempt for GPT app with uuid {gpt_application_id}"
+        )
+        raise HTTPException(
+            status_code=404,
+            detail="GPT application not found or not accessible by the user",
+        )
+
     user_sessions_query = (
         session.query(
             GPTAppSession.email,
@@ -183,12 +200,7 @@ def gpt_app_users_sesssion(
             CustomGPTApplication.uuid,
         )
         .join(CustomGPTApplication)
-        .filter(
-            and_(
-                CustomGPTApplication.uuid == gpt_application_id,
-                CustomGPTApplication.user_id == user.id,
-            )
-        )
+        .filter(CustomGPTApplication.uuid == gpt_application_id)
     )
 
     if query_params.name and query_params.email:
@@ -206,20 +218,14 @@ def gpt_app_users_sesssion(
         user_sessions_query = user_sessions_query.filter(
             GPTAppSession.email.containts(query_params.email)
         )
-    if query_params.start_datetime and query_params.end_datetime:
+
+    if query_params.start_datetime:
         user_sessions_query = user_sessions_query.filter(
-            and_(
-                GPTAppSession.created_at >= query_params.start_datetime,
-                GPTAppSession.created_at <= query_params.end_datetime,
-            )
+            GPTAppSession.created_at >= query_params.start_datetime
         )
-    elif query_params.start_datetime:
+    if query_params.end_datetime:
         user_sessions_query = user_sessions_query.filter(
-            GPTAppSession.created_at >= query_params.start_datetime,
-        )
-    elif query_params.end_datetime:
-        user_sessions_query = user_sessions_query.filter(
-            GPTAppSession.created_at <= query_params.end_datetime,
+            GPTAppSession.created_at <= query_params.end_datetime
         )
 
     total_count = (
@@ -227,7 +233,6 @@ def gpt_app_users_sesssion(
     )
 
     user_sessions_query = user_sessions_query.limit(query_params.limit)
-
     if query_params.offset:
         user_sessions_query = user_sessions_query.offset(query_params.offset)
 
@@ -238,12 +243,12 @@ def gpt_app_users_sesssion(
             f"No user sessions found for GPT app with uuid {gpt_application_id}"
         )
 
-    pagintaed_response = {
+    paginated_response = {
         "items": user_sessions,
         "total_count": total_count,
     }
 
-    return pagintaed_response
+    return paginated_response
 
 
 @gpt_application_router.get(
