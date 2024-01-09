@@ -242,10 +242,12 @@ async function apiSearch() {
     }
 
     items.forEach((session) => {
+      let created_at = moment(session.created_at);
+
       let row = `<tr>
                         <td class = 'cell'>${session.email}</td>
                         <td class = 'cell'>${session.name}</td>
-                        <td class = 'cell'>${session.created_at}</td>
+                        <td class = 'cell'>${created_at.fromNow()}</td>
                        </tr>`;
       table.innerHTML += row;
     });

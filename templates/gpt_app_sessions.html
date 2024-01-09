@@ -73,7 +73,7 @@ block body %}
                 <tr>
                   <th class="cell">Email</th>
                   <th class="cell">Name</th>
-                  <th class="cell">Created At</th>
+                  <th class="cell">Session Created</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -88,7 +88,14 @@ block body %}
   </div>
 </div>
 
-<script src="{{ url_for('static', path = '/assets/js/gpt-app-sessions.js') }}"></script>
+<script
+  type="module"
+  src="{{ url_for('static', path = '/assets/js/gpt-app-sessions.js') }}"
+></script>
+<script
+  type="text/JavaScript"
+  src=" https://MomentJS.com/downloads/moment.js"
+></script>
 <style>
   .datetime-input {
     font-size: 0.7rem;
