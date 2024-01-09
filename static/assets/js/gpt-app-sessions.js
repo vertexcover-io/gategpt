@@ -141,7 +141,6 @@ function addPaginationUI(data) {
     input.classList.add("page-link");
 
     if (i == navOffset - 1) {
-      console.log("here");
       listItem.classList.add("active");
     }
 
@@ -206,12 +205,10 @@ function getQueryParams() {
   }
   if (startDate) {
     startDate = new Date(startDate).toISOString();
-    console.log(startDate);
     queryParams.append("start_datetime", startDate);
   }
   if (endDate) {
     endDate = new Date(endDate).toISOString();
-    console.log(endDate);
     queryParams.append("end_datetime", endDate);
   }
   if (currentOffset) {
@@ -221,7 +218,6 @@ function getQueryParams() {
 }
 async function apiSearch() {
   let queryParams = getQueryParams();
-  console.log(queryParams, "here");
 
   let pathname = new URL(window.location.href).pathname;
   let fullPath = `/api/v1${pathname}?${queryParams.toString()}`;
@@ -229,7 +225,11 @@ async function apiSearch() {
   try {
     let response = await fetch(fullPath);
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      console.log("not ok response", response.status);
+    }
+    if (response.status === 404) {
+      window.location.href = "/404";
+      return;
     }
     let data = await response.json();
     let items = data.items;
