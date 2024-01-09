@@ -37,7 +37,7 @@
     <title>{% block title %}Default Title{% endblock %}</title>
   </head>
 
-  <body class="app d-flex flex-column h-100">
+  <body class="app d-flex flex-column" style="min-height: 100vh">
     <header class="app-header fixed-top">
       <div class="app-header-inner">
         <div class="container-fluid py-2">
@@ -62,21 +62,22 @@
 
     <div class="app-content pt-3 p-md-3 p-lg-4">
       {% block body %} {% endblock %}
-      <footer class="footer mt-auto py-3 bg-light">
-        <div class="cotainer text-center">
-          <p>
-            Template provided by
-
-            <a
-              class="app-link"
-              href="https://github.com/xriley/portal-theme-bs5"
-              target="_blank"
-              >Xiaoying Riley</a
-            >
-          </p>
-        </div>
-      </footer>
     </div>
+
+    <footer class="footer mt-auto py-3 bg-light">
+      <div class="cotainer text-center">
+        <p>
+          Template provided by
+
+          <a
+            class="app-link"
+            href="https://github.com/xriley/portal-theme-bs5"
+            target="_blank"
+            >Xiaoying Riley</a
+          >
+        </p>
+      </div>
+    </footer>
     <script
       src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
       integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
