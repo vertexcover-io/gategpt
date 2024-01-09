@@ -13,7 +13,7 @@ from pydantic import (
     validator,
 )
 from pydantic_core import Url
-from sqlalchemy import func, or_
+from sqlalchemy import desc, func, or_
 import shortuuid
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -232,7 +232,9 @@ def gpt_app_users_session(
         session.query(func.count()).select_from(user_sessions_query.subquery()).scalar()
     )
 
-    user_sessions_query = user_sessions_query.limit(query_params.limit)
+    user_sessions_query = user_sessions_query.order_by(
+        desc(GPTAppSession.created_at)
+    ).limit(query_params.limit)
     if query_params.offset:
         user_sessions_query = user_sessions_query.offset(query_params.offset)
 
