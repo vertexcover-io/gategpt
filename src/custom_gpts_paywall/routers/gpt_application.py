@@ -189,7 +189,9 @@ def gpt_app_users_session(
         )
         raise HTTPException(
             status_code=404,
-            detail="GPT application not found or not accessible by the user",
+            detail={
+                "deatil": "GPT application not found or not accessible by the user"
+            },
         )
 
     user_sessions_query = (
@@ -305,6 +307,53 @@ def register_custom_gpt_api(
         current_user=current_user,
     )
     return resp
+
+
+@gpt_application_router.get(
+    name="gpt_application_detail",
+    path="/api/v1/custom-gpt-application/{gpt_application_id}",
+    response_model=CustomGPTApplicationResponse,
+)
+def gpt_application_deail(
+    request: Request,
+    gpt_application_id: str,
+    session: DbSession,
+    logger: LoggerDep,
+    current_user: User = Depends(get_current_user),
+):
+    gpt_app = (
+        session.query(CustomGPTApplication)
+        .filter(
+            CustomGPTApplication.uuid == gpt_application_id,
+            CustomGPTApplication.user_id == current_user.id,
+        )
+        .first()
+    )
+    if not gpt_app:
+        logger.error(f"Gpt application with uuid {gpt_application_id}")
+        raise HTTPException(
+            status_code=404,
+            detail={"detail": "GPT application not found"},
+        )
+    return gpt_app
+
+
+@gpt_application_router.get(
+    name="gpt_application_detail_page",
+    path="/custom-gpt-application/{gpt_application_id}",
+    response_model=CustomGPTApplicationResponse,
+    include_in_schema=False,
+)
+def gpt_application_deail_page(
+    request: Request,
+    gpt_application_id: str,
+    session: DbSession,
+    logger: LoggerDep,
+    current_user: User = Depends(get_current_user),
+):
+    return templates.TemplateResponse(
+        "gpt_application_detail.html", {"request": request}
+    )
 
 
 @gpt_application_router.get(
