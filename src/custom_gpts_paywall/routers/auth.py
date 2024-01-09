@@ -90,7 +90,6 @@ async def oauth_callback_google(
             url=url_for(request, "login_failure", query_params={"error": error_msg})
         )
 
-    logger.info(f"User info: {user_info}")
     email = user_info["email"]
     name = user_info["name"]
     stmt = (

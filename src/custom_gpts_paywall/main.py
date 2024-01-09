@@ -84,5 +84,9 @@ def create_app() -> FastAPI:
     async def custom_404_handler(request, __):
         return templates.TemplateResponse("404.html", {"request": request})
 
+    @app.exception_handler(500)
+    async def internal_exception_handler(request, __):
+        return templates.TemplateResponse("500.html", {"request": request})
+
     logging.info("App created")
     return app
