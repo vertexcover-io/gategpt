@@ -347,8 +347,6 @@ def gpt_application_deail(
 def gpt_application_deail_page(
     request: Request,
     gpt_application_id: str,
-    session: DbSession,
-    logger: LoggerDep,
     current_user: User = Depends(get_current_user),
 ):
     return templates.TemplateResponse(

@@ -1,9 +1,9 @@
 {% extends "base.html" %} {% block title %} Gpt App Sessions {% endblock %} {%
 block body %}
 <div class="container-xl">
-  <h1 class="app-page-title">Random GPT Name</h1>
+  <h1 class="app-page-title" id="page-title"></h1>
   <div class="row gy-4">
-    <div class="col-12 col-lg-6">
+    <div class="">
       <div
         class="app-card app-card-account shadow-sm d-flex flex-column align-items-start"
       >
@@ -19,7 +19,7 @@ block body %}
             <div class="row justify-content-between align-items-center">
               <div class="col-auto">
                 <div class="item-label"><strong>GPT Name</strong></div>
-                <div class="item-data">James Doe</div>
+                <div class="item-data" id="gpt-name"></div>
               </div>
             </div>
           </div>
@@ -27,12 +27,7 @@ block body %}
             <div class="row justify-content-between align-items-center">
               <div class="col-auto">
                 <div class="item-label"><strong>GPT Description</strong></div>
-                <div class="item-data">
-                  Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quas
-                  totam placeat eaque, ea debitis accusantium cum doloremque
-                  perferendis ullam atque! Provident eius consectetur ea tenetur
-                  quod possimus commodi cupiditate veniam!
-                </div>
+                <div class="item-data" id="gpt-description"></div>
               </div>
             </div>
           </div>
@@ -40,7 +35,7 @@ block body %}
             <div class="row justify-content-between align-items-center">
               <div class="col-auto">
                 <div class="item-label"><strong>GPT URL</strong></div>
-                <div class="item-data">https://johndoewebsite.com</div>
+                <div class="item-data" id="gpt-url"></div>
               </div>
             </div>
           </div>
@@ -48,7 +43,7 @@ block body %}
             <div class="row justify-content-between align-items-center">
               <div class="col-auto">
                 <div class="item-label"><strong>Token Expiry</strong></div>
-                <div class="item-data">P5D</div>
+                <div class="item-data" id="gpt-token-expiry"></div>
               </div>
             </div>
           </div>
@@ -56,7 +51,7 @@ block body %}
             <div class="row justify-content-between align-items-center">
               <div class="col-auto">
                 <div class="item-label"><strong>Created At</strong></div>
-                <div class="item-data">2024-01-07T12:37:39.093158Z</div>
+                <div class="item-data" id="gpt-created-at"></div>
               </div>
             </div>
           </div>
@@ -64,7 +59,7 @@ block body %}
             <div class="row justify-content-between align-items-center">
               <div class="col-auto">
                 <div class="item-label"><strong>Updated At</strong></div>
-                <div class="item-data">2024-01-07T12:37:39.093158Z</div>
+                <div class="item-data" id="gpt-updated-at"></div>
               </div>
             </div>
           </div>
@@ -72,9 +67,7 @@ block body %}
             <div class="row justify-content-between align-items-center">
               <div class="col-auto">
                 <div class="item-label"><strong>Client Id</strong></div>
-                <div class="item-data">
-                  44c60c84-a8cc-49c1-8a71-521b69c5d7be
-                </div>
+                <div class="item-data" id="client-id"></div>
               </div>
             </div>
           </div>
@@ -82,25 +75,22 @@ block body %}
             <div class="row justify-content-between align-items-center">
               <div class="col-auto">
                 <div class="item-label"><strong>Client Secret</strong></div>
-                <div class="item-data">
-                  b270810e-5dac-493a-bd3b-f2125ee8e089
-                </div>
+                <div class="item-data" id="gpt-client-secret"></div>
               </div>
             </div>
           </div>
         </div>
         <div class="app-card-footer p-4 mt-auto">
-          <a class="btn app-btn-secondary" href="#">Manage Profile</a>
+          <a class="btn app-btn-secondary" id="app-sessions-link" href="#"
+            >View App Sessions</a
+          >
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<script
-  type="module"
-  src="{{ url_for('static', path = '/assets/js/gpt-app-sessions.js') }}"
-></script>
+<script src="{{ url_for('static', path = 'assets/js/gpt-detail.js') }}"></script>
 <script
   type="text/JavaScript"
   src="https://MomentJS.com/downloads/moment.js"
