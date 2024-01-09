@@ -4,12 +4,10 @@ from sqlalchemy import text
 
 from custom_gpts_paywall.dependencies import DbSession, LoggerDep, login_required
 from fastapi import Request
-from fastapi.templating import Jinja2Templates
 from custom_gpts_paywall.models import User
+from custom_gpts_paywall.config import templates
 
 root_router = APIRouter()
-
-templates = Jinja2Templates(directory="templates")
 
 
 @root_router.get("/privacy-policy", response_class=HTMLResponse, name="privacy_policy")

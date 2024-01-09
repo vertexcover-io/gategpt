@@ -1,7 +1,12 @@
 import logging
 from fastapi import FastAPI, staticfiles
 from starlette.middleware.sessions import SessionMiddleware
-from custom_gpts_paywall.config import EnvConfig, OpenAPISchemaTags, create_config
+from custom_gpts_paywall.config import (
+    EnvConfig,
+    OpenAPISchemaTags,
+    create_config,
+    templates,
+)
 from custom_gpts_paywall.routers.root import root_router
 from custom_gpts_paywall.routers.openapi_schema import openapi_schema_router
 from custom_gpts_paywall.routers.verification import verification_router
@@ -74,6 +79,10 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(auth_router, tags=[OpenAPISchemaTags.Auth])
+
+    @app.exception_handler(404)
+    async def custom_404_handler(request, __):
+        return templates.TemplateResponse("404.html", {"request": request})
 
     logging.info("App created")
     return app
