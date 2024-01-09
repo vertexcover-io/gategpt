@@ -206,11 +206,13 @@ function getQueryParams() {
   }
   if (startDate) {
     startDate = new Date(startDate).toISOString();
-    queryParams.append("start_date", startDate);
+    console.log(startDate);
+    queryParams.append("start_datetime", startDate);
   }
   if (endDate) {
     endDate = new Date(endDate).toISOString();
-    queryParams.append("end_date", endDate);
+    console.log(endDate);
+    queryParams.append("end_datetime", endDate);
   }
   if (currentOffset) {
     queryParams.append("offset", currentOffset * 20);
@@ -219,6 +221,7 @@ function getQueryParams() {
 }
 async function apiSearch() {
   let queryParams = getQueryParams();
+  console.log(queryParams, "here");
 
   let pathname = new URL(window.location.href).pathname;
   let fullPath = `/api/v1${pathname}?${queryParams.toString()}`;
