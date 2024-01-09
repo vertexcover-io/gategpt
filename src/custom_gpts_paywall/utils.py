@@ -21,7 +21,6 @@ def url_for(
     **path_params: Any,
 ) -> str:
     url = request.url_for(name, **path_params)
-    print(url)
     replace_kwargs = dict(scheme=scheme or request.url.scheme)
     if query_params:
         replace_kwargs["query"] = urlencode(query_params)

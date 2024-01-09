@@ -116,3 +116,10 @@ async def oauth_callback_google(
     )
     response.set_cookie("jwt_token", jwt_token, httponly=True)
     return response
+
+
+@auth_router.get("/logout", name="auth_logout")
+def logout(request: Request):
+    response = RedirectResponse(url=url_for(request, "login_page"))
+    response.set_cookie("jwt_token", max_age=-1)
+    return response
