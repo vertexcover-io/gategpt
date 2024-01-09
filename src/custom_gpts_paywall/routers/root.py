@@ -62,6 +62,21 @@ def root(
 
 
 @root_router.get(
+    "/404", include_in_schema=False, response_class=FileResponse, name="404_not_found"
+)
+def not_found_page(
+    request: Request,
+    logger: LoggerDep,
+):
+    return templates.TemplateResponse(
+        "404.html",
+        {
+            "request": request,
+        },
+    )
+
+
+@root_router.get(
     "/healthcheck",
     include_in_schema=False,
 )
