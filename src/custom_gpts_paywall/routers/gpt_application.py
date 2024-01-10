@@ -70,7 +70,7 @@ class AuthenticationDetails(BaseModel):
     token_url: HttpUrl
     scope: Literal["email"] = Field(default="email")
     authentication_type: Literal["OAuth"] = Field(default="OAuth")
-    token_exchange_message: Literal["Basic Auth"] = Field(default="Basic Auth")
+    token_exchange_method: Literal["Basic Auth"] = Field(default="Basic Auth")
 
 
 class RegisterGPTApplicationResponse(RegisterGPTApplicationRequest):
@@ -312,13 +312,14 @@ def register_custom_gpt_api(
 @gpt_application_router.get(
     name="gpt_application_detail",
     path="/api/v1/custom-gpt-application/{gpt_application_id}",
-    response_model=CustomGPTApplicationResponse,
+    response_model=RegisterGPTApplicationResponse,
 )
 def gpt_application_deail(
     request: Request,
     gpt_application_id: str,
     session: DbSession,
     logger: LoggerDep,
+    config: ConfigDep,
     current_user: User = Depends(get_current_user),
 ):
     gpt_app = (
@@ -329,13 +330,30 @@ def gpt_application_deail(
         )
         .first()
     )
+
     if not gpt_app:
         logger.error(f"Gpt application with uuid {gpt_application_id}")
         raise HTTPException(
             status_code=404,
             detail={"detail": "GPT application not found"},
         )
-    return gpt_app
+    auth_details = AuthenticationDetails(
+        client_id=str(gpt_app.client_id),
+        client_secret=str(gpt_app.client_secret),
+        authorization_url=url_for(request, "oauth2_authorize"),
+        token_url=url_for(request, "oauth2_token"),
+    )
+
+    resp = RegisterGPTApplicationResponse(
+        **gpt_app.__dict__,
+        prompt=config.instruction_prompt,
+        action_schema_url=url_for(
+            request, "openapi_schema_by_tags", query_params={"tags": "auth"}
+        ),
+        privacy_policy_url=url_for(request, "privacy_policy"),
+        authentication_details=auth_details,
+    )
+    return resp
 
 
 @gpt_application_router.get(
