@@ -1,6 +1,9 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <title>Login</title>
+
+    <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -10,10 +13,7 @@
     />
     <meta name="author" content="Xiaoying Riley at 3rd Wave Media" />
     <link rel="shortcut icon" href="favicon.ico" />
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="upgrade-insecure-requests"
-    />
+
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
@@ -33,51 +33,81 @@
 
   <body class="app app-login p-0">
     <div class="row g-0 app-auth-wrapper">
-      <div class="d-flex flex-column align-content-end">
-        <div class="app-auth-body mx-auto">
-          <div class="app-auth-branding mb-4">
-            <!-- replace with ladning page and app logo -->
-            <a href="index.html">
-              <img
-                src="{{ url_for('static', path = 'logo/svg/logo-color.svg') }}"
-                height="100px"
-              />
-            </a>
+      <div class="col-12 col-md-7 col-lg-6 auth-main-col text-center p-5">
+        <div class="d-flex flex-column align-content-end">
+          <div class="app-auth-body mx-auto">
+            <div class="app-auth-branding mb-4">
+              <!-- replace with application landing page -->
+              <a href="#"
+                ><img
+                  class="logo-icon me-2"
+                  src="{{ url_for('static', path = 'logo/svg/logo-no-background.svg') }}"
+                  alt="logo"
+                  style="height: 40px; object-fit: contain"
+              /></a>
+            </div>
+            <h2 class="auth-heading text-center mb-5">Log in to Gate GPT</h2>
+            <div class="auth-form-container text-start">
+              <form class="auth-form login-form"></form>
+              <div class="auth-form-container text-start">
+                <button
+                  class="btn app-btn-primary mx-auto d-block"
+                  onclick="login()"
+                >
+                  Login/Register
+                </button>
+              </div>
+
+              <div class="auth-option text-center pt-5">
+                No Account? Register from this same page
+              </div>
+            </div>
           </div>
-          <h2 class="auth-heading text-center mb-5">Log in to GateGPT</h2>
-          <div class="auth-form-container text-start">
-            <button
-              class="btn app-btn-primary mx-auto d-block"
-              onclick="login()"
-            >
-              Login/Register
-            </button>
+
+          <footer class="app-auth-footer">
+            <div class="container text-center py-3">
+              <p>
+                Template provided by
+
+                <a
+                  class="app-link"
+                  href="https://github.com/xriley/portal-theme-bs5"
+                  target="_blank"
+                  >Xiaoying Riley</a
+                >
+              </p>
+            </div>
+          </footer>
+        </div>
+      </div>
+      <div class="col-12 col-md-5 col-lg-6 h-100 auth-background-col">
+        <div class="auth-background-holder"></div>
+        <div class="auth-background-mask"></div>
+        <div class="auth-background-overlay p-3 p-lg-5">
+          <div class="d-flex flex-column align-content-end h-100">
+            <div class="h-100"></div>
           </div>
         </div>
-        <footer class="footer mt-auto py-3 bg-light">
-          <div class="cotainer text-center">
-            <p>
-              Template provided by
-
-              <a
-                class="app-link"
-                href="https://github.com/xriley/portal-theme-bs5"
-                target="_blank"
-                >Xiaoying Riley</a
-              >
-            </p>
-          </div>
-        </footer>
       </div>
     </div>
-    <script>
-      function login() {
-        let form = document.createElement("form");
-        form.method = "POST";
-        form.action = "/login";
-        document.body.appendChild(form);
-        form.submit();
-      }
-    </script>
   </body>
+  <script>
+    function login() {
+      let form = document.createElement("form");
+      form.method = "POST";
+      form.action = "/login";
+      document.body.appendChild(form);
+      form.submit();
+    }
+  </script>
+
+  <style>
+    .app-login .auth-background-holder {
+      background: url("{{url_for('static', path = '/assets/images/background-1.jpg')}}")
+        no-repeat center;
+      background-size: cover;
+      height: 100vh;
+      min-height: 100%;
+    }
+  </style>
 </html>
