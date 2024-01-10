@@ -19,24 +19,6 @@ let url = new URL(window.location.href);
 let pathSegments = url.pathname.split("/");
 let gptApplicationId = pathSegments[pathSegments.length - 1];
 
-function formatName(name) {
-  let formattedName = name.replace(/_/g, " ");
-
-  let words = formattedName.split(" ");
-  if (words.length > 0) {
-    words[0] =
-      words[0].charAt(0).toUpperCase() + words[0].slice(1).toLowerCase();
-    if (words.length > 1) {
-      let lastIndex = words.length - 1;
-      words[lastIndex] =
-        words[lastIndex].charAt(0).toUpperCase() +
-        words[lastIndex].slice(1).toLowerCase();
-    }
-  }
-
-  return words.join(" ");
-}
-
 async function fetchGPTApplicationDetails() {
   try {
     let apiEndpoint = `/api/v1/custom-gpt-application/${gptApplicationId}`;
