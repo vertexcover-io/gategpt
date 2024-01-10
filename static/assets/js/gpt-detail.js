@@ -33,8 +33,15 @@ async function fetchGPTApplicationDetails() {
     gptDescriptionElement.textContent = data.gpt_description;
     gptUrlElement.textContent = data.gpt_url;
     gptTokenExpiryElement.textContent = data.token_expiry;
-    gptCreatedAtElement.textContent = data.created_at;
-    gptUpdatedAtElement.textContent = data.updated_at;
+
+    let createdAt = moment(data.created_at);
+    gptCreatedAtElement.title = createdAt.format("YYYY-MM-DD HH:mm:ss");
+    gptCreatedAtElement.textContent = createdAt.fromNow();
+
+    let updatedAt = moment(data.updated_at);
+    gptUpdatedAtElement.title = updatedAt.format("YYYY-MM-DD HH:mm:ss");
+    gptUpdatedAtElement.textContent = updatedAt.fromNow();
+
     clientIdElement.textContent = data.client_id;
     clientSecretElement.textContent = data.client_secret;
     appSessions.href = `/custom-gpt-application/${gptApplicationId}/gpt-app-sessions/`;
