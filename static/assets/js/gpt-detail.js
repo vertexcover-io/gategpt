@@ -63,8 +63,8 @@ async function fetchGPTApplicationDetails() {
 
     privacyPolicyUrl.appendChild(createAnchor(data.privacy_policy_url));
 
-    prompt.textContent = data.prompt;
-    actionSchemaUrl.appendChild(createAnchor(data.action_schema_url));
+    gptPrompt.textContent = data.prompt;
+    actionSchemaUrl.textContent = data.action_schema_url;
 
     let createdAt = moment(data.created_at);
     created.title = createdAt.format("YYYY-MM-DD HH:mm:ss");
@@ -80,9 +80,8 @@ async function fetchGPTApplicationDetails() {
       createCopyButton(data.authentication_details.client_secret),
     );
 
-    authorizationUrl.appendChild(
-      createAnchor(data.authentication_details.authorization_url),
-    );
+    authorizationUrl.textContent =
+      data.authentication_details.authorization_url;
 
     tokenUrl.textContent = data.authentication_details.token_url;
     scope.textContent = data.authentication_details.scope;
