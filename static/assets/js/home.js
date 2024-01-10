@@ -17,9 +17,14 @@ async function fetchGPTApplications() {
       throw new Error("Network response was not ok");
     }
     const gptApplications = await response.json();
+    const title = document.getElementById("title");
 
     const container = document.querySelector(".row.g-4");
     container.innerHTML = "";
+    if (!gptApplications.length) {
+      title.textContent = "You don't have any gpt applications";
+      return;
+    }
 
     gptApplications.forEach((application) => {
       const appDiv = document.createElement("div");
