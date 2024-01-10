@@ -25,6 +25,18 @@ function createAnchor(value) {
   a.textContent = value;
   return a;
 }
+function createCopyButton(value) {
+  let img = document.createElement("img");
+  img.src = "/static/assets/images/copy.svg";
+  img.height = "30";
+  img.width = "30";
+  img.alt = "clickable image";
+  img.style.cursor = "pointer";
+  img.addEventListener("click", () => {
+    navigator.clipboard.writeText(value);
+  });
+  return img;
+}
 
 async function fetchGPTApplicationDetails() {
   try {
@@ -56,7 +68,14 @@ async function fetchGPTApplicationDetails() {
     created.textContent = createdAt.fromNow();
 
     clientId.textContent = data.authentication_details.client_id;
+    clientId.appendChild(
+      createCopyButton(data.authentication_details.client_id),
+    );
+
     clientSecret.textContent = data.authentication_details.client_secret;
+    clientSecret.appendChild(
+      createCopyButton(data.authentication_details.client_secret),
+    );
 
     authorizationUrl.appendChild(
       createAnchor(data.authentication_details.authorization_url),
