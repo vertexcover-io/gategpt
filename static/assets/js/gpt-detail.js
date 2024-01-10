@@ -6,7 +6,7 @@ let uuid = document.getElementById("uuid");
 let privacyPolicyUrl = document.getElementById("privacy-policy-url");
 let prompt = document.getElementById("prompt");
 let actionSchemaUrl = document.getElementById("action-schema-url");
-let createdAt = document.getElementById("created-at");
+let created = document.getElementById("created-at");
 let clientId = document.getElementById("client-id");
 let clientSecret = document.getElementById("client-secret");
 let authorizationUrl = document.getElementById("authorization-url");
@@ -41,7 +41,11 @@ async function fetchGPTApplicationDetails() {
     privacyPolicyUrl.textContent = data.privacy_policy_url;
     prompt.textContent = data.prompt;
     actionSchemaUrl.textContent = data.action_schema_url;
-    createdAt.textContent = data.created_at;
+
+    let createdAt = moment(data.created_at);
+    created.title = createdAt.format("YYYY-MM-DD HH:mm:ss");
+    created.textContent = createdAt.fromNow();
+
     clientId.textContent = data.authentication_details.client_id;
     clientSecret.textContent = data.authentication_details.client_secret;
     authorizationUrl.textContent =
