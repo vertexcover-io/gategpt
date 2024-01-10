@@ -4,7 +4,7 @@ let verificationMedium = document.getElementById("verification-medium");
 let gptDescription = document.getElementById("gpt-description");
 let uuid = document.getElementById("uuid");
 let privacyPolicyUrl = document.getElementById("privacy-policy-url");
-let prompt = document.getElementById("prompt");
+let gptPrompt = document.getElementById("prompt");
 let actionSchemaUrl = document.getElementById("action-schema-url");
 let created = document.getElementById("created-at");
 let clientId = document.getElementById("client-id");
@@ -14,6 +14,8 @@ let tokenUrl = document.getElementById("token-url");
 let scope = document.getElementById("scope");
 let authenticationType = document.getElementById("authentication-type");
 let tokenExchangeMethod = document.getElementById("token-exchange-method");
+let appSessionsLink = document.getElementById("app-sessions-link");
+let pageTitle = document.getElementById("page-title");
 
 let url = new URL(window.location.href);
 let pathSegments = url.pathname.split("/");
@@ -30,7 +32,6 @@ function createCopyButton(value) {
   img.src = "/static/assets/images/copy.svg";
   img.height = "30";
   img.width = "30";
-  img.alt = "clickable image";
   img.style.cursor = "pointer";
   img.addEventListener("click", () => {
     navigator.clipboard.writeText(value);
@@ -51,8 +52,10 @@ async function fetchGPTApplicationDetails() {
       window.location.href = "/404";
       return;
     }
+
     let data = await response.json();
     gptName.textContent = data.gpt_name;
+    pageTitle.textContent = data.gpt_name;
     gptUrl.appendChild(createAnchor(data.gpt_url));
     verificationMedium.textContent = data.verification_medium;
     gptDescription.textContent = data.gpt_description;
@@ -87,6 +90,8 @@ async function fetchGPTApplicationDetails() {
       data.authentication_details.authentication_type;
     tokenExchangeMethod.textContent =
       data.authentication_details.token_exchange_method;
+
+    appSessionsLink.href = `/custom-gpt-application/${gptApplicationId}/gpt-app-sessions/`;
   } catch (error) {
     console.error("Error fetching data:", error);
   }
