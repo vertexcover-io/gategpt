@@ -78,6 +78,7 @@ class RegisterGPTApplicationResponse(RegisterGPTApplicationRequest):
     privacy_policy_url: str
     prompt: str
     action_schema_url: str
+    created_at: datetime
     authentication_details: AuthenticationDetails
 
 
@@ -139,6 +140,7 @@ def register_custom_gpt_controller(
         )
 
         resp = RegisterGPTApplicationResponse(
+            created_at=gpt_application.created_at,
             gpt_name=gpt_application.gpt_name,
             gpt_url=gpt_application.gpt_url,
             verification_medium=gpt_application.verification_medium,

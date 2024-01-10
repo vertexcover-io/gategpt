@@ -14,7 +14,7 @@ block body %}
             </div>
           </div>
         </div>
-        <div class="app-card-body px-4 w-100">
+        <div class="app-card-body px-4 w-100" id="main-div">
           <div class="item border-bottom py-3">
             <div class="row justify-content-between align-items-center">
               <div class="col-auto">
@@ -23,14 +23,7 @@ block body %}
               </div>
             </div>
           </div>
-          <div class="item border-bottom py-3">
-            <div class="row justify-content-between align-items-center">
-              <div class="col-auto">
-                <div class="item-label"><strong>GPT Description</strong></div>
-                <div class="item-data" id="gpt-description"></div>
-              </div>
-            </div>
-          </div>
+
           <div class="item border-bottom py-3">
             <div class="row justify-content-between align-items-center">
               <div class="col-auto">
@@ -39,60 +32,159 @@ block body %}
               </div>
             </div>
           </div>
+
           <div class="item border-bottom py-3">
             <div class="row justify-content-between align-items-center">
               <div class="col-auto">
-                <div class="item-label"><strong>Token Expiry</strong></div>
-                <div class="item-data" id="gpt-token-expiry"></div>
+                <div class="item-label">
+                  <strong>Verification Medium</strong>
+                </div>
+                <div class="item-data" id="verification-medium"></div>
               </div>
             </div>
           </div>
+
           <div class="item border-bottom py-3">
             <div class="row justify-content-between align-items-center">
               <div class="col-auto">
-                <div class="item-label"><strong>Created</strong></div>
-                <div class="item-data" id="gpt-created-at"></div>
+                <div class="item-label"><strong>GPT Description</strong></div>
+                <div class="item-data" id="gpt-description"></div>
               </div>
             </div>
           </div>
+
           <div class="item border-bottom py-3">
             <div class="row justify-content-between align-items-center">
               <div class="col-auto">
-                <div class="item-label"><strong>Updated</strong></div>
-                <div class="item-data" id="gpt-updated-at"></div>
+                <div class="item-label"><strong>UUID</strong></div>
+                <div class="item-data" id="uuid"></div>
               </div>
             </div>
           </div>
+
           <div class="item border-bottom py-3">
             <div class="row justify-content-between align-items-center">
               <div class="col-auto">
-                <div class="item-label"><strong>Client Id</strong></div>
+                <div class="item-label">
+                  <strong>Privacy Policy URL</strong>
+                </div>
+                <div class="item-data" id="privacy-policy-url"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="item border-bottom py-3">
+            <div class="row justify-content-between align-items-center">
+              <div class="col-auto">
+                <div class="item-label"><strong>Prompt</strong></div>
+                <div class="item-data" id="prompt"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="item border-bottom py-3">
+            <div class="row justify-content-between align-items-center">
+              <div class="col-auto">
+                <div class="item-label"><strong>Action Schema URL</strong></div>
+                <div class="item-data" id="action-schema-url"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="item border-bottom py-3">
+            <div class="row justify-content-between align-items-center">
+              <div class="col-auto">
+                <div class="item-label"><strong>Created At</strong></div>
+                <div class="item-data" id="created-at"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="item border-bottom py-3">
+            <div class="row justify-content-between align-items-center">
+              <div class="col-auto">
+                <div class="item-label"><strong>Client ID</strong></div>
                 <div class="item-data" id="client-id"></div>
               </div>
             </div>
           </div>
+
           <div class="item border-bottom py-3">
             <div class="row justify-content-between align-items-center">
               <div class="col-auto">
-                <div class="item-label"><strong>Client Secret</strong></div>
-                <div class="item-data" id="gpt-client-secret"></div>
+                <div class="item-label">
+                  <strong>Client Secret</strong>
+                  <div class="item-data" id="client-secret"></div>
+                </div>
               </div>
+            </div>
+
+            <div class="item border-bottom py-3">
+              <div class="row justify-content-between align-items-center">
+                <div class="col-auto">
+                  <div class="item-label">
+                    <strong>Authorization URL</strong>
+                  </div>
+                  <div class="item-data" id="authorization-url"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="item border-bottom py-3">
+              <div class="row justify-content-between align-items-center">
+                <div class="col-auto">
+                  <div class="item-label"><strong>Token URL</strong></div>
+                  <div class="item-data" id="token-url"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="item border-bottom py-3">
+              <div class="row justify-content-between align-items-center">
+                <div class="col-auto">
+                  <div class="item-label"><strong>Scope</strong></div>
+                  <div class="item-data" id="scope"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="item border-bottom py-3">
+              <div class="row justify-content-between align-items-center">
+                <div class="col-auto">
+                  <div class="item-label">
+                    <strong>Authentication Type</strong>
+                  </div>
+                  <div class="item-data" id="authentication-type"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="item border-bottom py-3">
+              <div class="row justify-content-between align-items-center">
+                <div class="col-auto">
+                  <div class="item-label">
+                    <strong>Token Exchange Method</strong>
+                  </div>
+                  <div class="item-data" id="token-exchange-method"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="app-card-footer p-4 mt-auto">
+              <a class="btn app-btn-secondary" id="app-sessions-link" href="#"
+                >View App Sessions</a
+              >
             </div>
           </div>
         </div>
-        <div class="app-card-footer p-4 mt-auto">
-          <a class="btn app-btn-secondary" id="app-sessions-link" href="#"
-            >View App Sessions</a
-          >
-        </div>
       </div>
     </div>
+
+    <script src="{{ url_for('static', path = 'assets/js/gpt-detail.js') }}"></script>
+    <script
+      type="text/JavaScript"
+      src="https://MomentJS.com/downloads/moment.js"
+    ></script>
+    {% endblock %}
   </div>
 </div>
-
-<script src="{{ url_for('static', path = 'assets/js/gpt-detail.js') }}"></script>
-<script
-  type="text/JavaScript"
-  src="https://MomentJS.com/downloads/moment.js"
-></script>
-{% endblock %}
