@@ -1,15 +1,21 @@
 let table = document.getElementById("sessionsTable");
 let searchBtn = document.getElementById("searchBtn");
 let mainDiv = document.getElementById("orders-all");
-let fullPath = new URL(window.location.href);
+let tableTitle = document.getElementById("title");
+let paginateNav = document.getElementById("app-pagination");
+
 let currentOffset = 0;
 let OFFEST_VAL = 20;
-let paginateNav = document.getElementById("app-pagination");
 let paginateUl = paginateNav.children[0];
 let navOffset = 1;
 let totalCount;
 let previous;
 let next;
+
+let fullPath = new URL(window.location.href);
+let pathSegments = fullPath.pathname.split("/");
+
+let gptApplicationId = pathSegments[pathSegments.length - 3];
 
 fullPath = `/api/v1${fullPath.pathname}`;
 
@@ -249,4 +255,25 @@ searchBtn.addEventListener("click", async (e) => {
   await apiSearch();
 });
 
-apiSearch();
+async function getGptApplication() {
+  let apiEndpoint = `/api/v1/custom-gpt-application/${gptApplicationId}`;
+
+  let response = await fetch(apiEndpoint);
+  if (!response.ok) {
+    console.log(`HTTP error! status: ${response.status}`);
+    return;
+  }
+  if (response.status === 404) {
+    window.location.href = "/404";
+    return;
+  }
+  let data = await response.json();
+  tableTitle.textContent = `${data.gpt_name}'s Sessions`;
+}
+
+async function main() {
+  getGptApplication();
+  apiSearch();
+}
+
+main();
