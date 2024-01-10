@@ -76,6 +76,8 @@ def parse_user(secret_key_bytes, jwt_token, session) -> User | None:
         return user
     except jwt.DecodeError:
         return None
+    except jwt.ExpiredSignatureError:
+        return None
 
 
 def get_current_user(
