@@ -1,5 +1,6 @@
 let table = document.getElementById("sessionsTable");
 let searchBtn = document.getElementById("searchBtn");
+let mainDiv = document.getElementById("orders-all");
 let fullPath = new URL(window.location.href);
 let currentOffset = 0;
 let OFFEST_VAL = 20;
@@ -10,28 +11,7 @@ let totalCount;
 let previous;
 let next;
 
-table.removeAttribute;
-
 fullPath = `/api/v1${fullPath.pathname}`;
-
-function addClass(n, className) {
-  if (n.classList.contains(className)) return;
-  n.classList.add(className);
-}
-
-function addAttr(n, attrName, value) {
-  if (n.hasAttribute(attrName)) return;
-  n.setAttribute(attrName, value);
-}
-function removeClass(n, className) {
-  if (!n.classList.contains(className)) return;
-  n.classList.remove(className);
-}
-
-function removeAttr(n, attrName) {
-  if (!n.hasAttribute(attrName)) return;
-  n.removeAttribute(attrName);
-}
 
 async function increasePagination() {
   while (paginateUl.childNodes.length > 3) {
@@ -239,6 +219,12 @@ async function apiSearch() {
     let tableRows = table.getElementsByTagName("tr");
     for (let i = tableRows.length - 1; i > 0; i--) {
       table.removeChild(tableBody[i]);
+    }
+    if (!items.length) {
+      let h2 = document.createElement("h2");
+      h2.className = "text-center";
+      h2.textContent = "No sessions found :(";
+      mainDiv.appendChild(h2);
     }
 
     items.forEach((session) => {
