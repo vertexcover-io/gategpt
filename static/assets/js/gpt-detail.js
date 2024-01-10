@@ -19,6 +19,13 @@ let url = new URL(window.location.href);
 let pathSegments = url.pathname.split("/");
 let gptApplicationId = pathSegments[pathSegments.length - 1];
 
+function createAnchor(value) {
+  let a = document.createElement("a");
+  a.href = value;
+  a.textContent = value;
+  return a;
+}
+
 async function fetchGPTApplicationDetails() {
   try {
     let apiEndpoint = `/api/v1/custom-gpt-application/${gptApplicationId}`;
@@ -34,13 +41,15 @@ async function fetchGPTApplicationDetails() {
     }
     let data = await response.json();
     gptName.textContent = data.gpt_name;
-    gptUrl.textContent = data.gpt_url;
+    gptUrl.appendChild(createAnchor(data.gpt_url));
     verificationMedium.textContent = data.verification_medium;
     gptDescription.textContent = data.gpt_description;
     uuid.textContent = data.uuid;
-    privacyPolicyUrl.textContent = data.privacy_policy_url;
+
+    privacyPolicyUrl.appendChild(createAnchor(data.privacy_policy_url));
+
     prompt.textContent = data.prompt;
-    actionSchemaUrl.textContent = data.action_schema_url;
+    actionSchemaUrl.appendChild(createAnchor(data.action_schema_url));
 
     let createdAt = moment(data.created_at);
     created.title = createdAt.format("YYYY-MM-DD HH:mm:ss");
@@ -48,8 +57,11 @@ async function fetchGPTApplicationDetails() {
 
     clientId.textContent = data.authentication_details.client_id;
     clientSecret.textContent = data.authentication_details.client_secret;
-    authorizationUrl.textContent =
-      data.authentication_details.authorization_url;
+
+    authorizationUrl.appendChild(
+      createAnchor(data.authentication_details.authorization_url),
+    );
+
     tokenUrl.textContent = data.authentication_details.token_url;
     scope.textContent = data.authentication_details.scope;
     authenticationType.textContent =
