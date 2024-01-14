@@ -75,6 +75,10 @@ def create_session(
 
     # Parse the response to get user information
     user_info = response.json()
+    logger.info(
+        f"New Session Request for: {create_session_request.gpt_application_id} with user info: {user_info}"
+    )
+
     gpt_session = GPTAppSession(
         gpt_application_id=gpt_application.id,
         email=user_info["email"],
@@ -82,4 +86,5 @@ def create_session(
     )
     session.add(gpt_session)
     session.commit()
+    logger.info(f"New Session Created: {gpt_session}")
     return gpt_session
