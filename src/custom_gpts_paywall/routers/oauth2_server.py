@@ -156,7 +156,7 @@ async def _fetch_google_user_profile(access_token: str) -> GoogleUserInfo:
     userinfo_endpoint = "https://www.googleapis.com/oauth2/v3/userinfo"
 
     response = await client.get(userinfo_endpoint)
-    return await response.json()
+    return response.json()
 
 
 async def _fetch_user_email(
@@ -235,7 +235,7 @@ async def oauth2_server_token(
     access_token = token["access_token"]
     try:
         user_info = await _fetch_google_user_profile(access_token)
-    except (httpx.RequestError, httpx.httpx.NetworkError) as exc:
+    except (httpx.RequestError, httpx.NetworkError) as exc:
         logger.error(
             f"A network error occurred while fetching user_info: {exc}",
             exc_info=True,
@@ -257,6 +257,7 @@ async def oauth2_server_token(
         config,
         email=email,
         name=name,
+        gpt_application_id=gpt_application.id,
     )
 
     logger.info(

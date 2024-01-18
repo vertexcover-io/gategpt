@@ -148,14 +148,14 @@ def create_config() -> EnvConfig:
 
 
 def create_jwt_token(
-    config: EnvConfig, user_email: str, **custom_claim: dict[str, Any]
+    config: EnvConfig, email: str, **custom_claim: dict[str, Any]
 ) -> str:
     expires_in = config.jwt_token_expiry
     secret_key = config.secret_key.encode("utf-8")
     payload = {
         "exp": utcnow() + expires_in,
         "iat": utcnow(),
-        "sub": user_email,
+        "sub": email,
         **custom_claim,
     }
     return jwt.encode(payload, secret_key, algorithm=JWT_ENCODE_ALGORITHM)
