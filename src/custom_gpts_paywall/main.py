@@ -68,7 +68,7 @@ def create_app() -> FastAPI:
     app.include_router(
         gpt_app_session_router,
         prefix="/api/v1",
-        tags=[OpenAPISchemaTags.UserSession],
+        tags=[OpenAPISchemaTags.GPTAppSession],
     )
 
     app.include_router(

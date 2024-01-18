@@ -31,7 +31,7 @@ class OpenAPISchemaTags(Enum):
     Auth = "auth"
     GPTAppRegistration = "gpt_app_registration"
     OAuth2Server = "oauth2_server"
-    GPTAppSession = "user_session"
+    GPTAppSession = "gpt_app_session"
     CustomGptApplication = "custom_gpt_application"
 
 
