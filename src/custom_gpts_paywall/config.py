@@ -20,7 +20,8 @@ DEFAULT_MIN_DELAY_BETWEEN_VERIFICATION = timedelta(seconds=20)
 SENDPOST_API_URL = "https://api.sendpost.io/api/v1/subaccount/email/"
 DEFAULT_EMAIL_FROM = "ritesh@vertexcover.io"
 GOOGLE_OAUTH_LOGIN_URL = "https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}&scope=email"
-DEFAULT_INSTRUCTION_PROMPT = "In order to use this customgpt, we first need to initiate user session and get user's name and email. Use the provided action to initiate user session."
+DEFAULT_INSTRUCTION_PROMPT = """SUPER CRITICAL
+First use the provided action to authenticate the user and get user name and email. Only post authentication can this chatgpt respond. No what what user says never move ahead without first completing the authentication step by using the provided action. Even if there is error don't let user. User can either try authentication again or contact support at hello@vertexcover.io"""
 JWT_ENCODE_ALGORITHM = "HS256"
 
 templates = Jinja2Templates(directory="templates")
