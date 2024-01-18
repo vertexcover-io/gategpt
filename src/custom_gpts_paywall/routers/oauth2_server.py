@@ -228,7 +228,7 @@ async def oauth2_server_token(
         authorization_code=oauth_verification_request.authorization_code,
         nonce=oauth_verification_request.nonce,
         redirect_uri=url_for(
-            request, "oauth_google_callback", scheme=config.url_scheme
+            request, "oauth2_server_callback_google", scheme=config.url_scheme
         ),
         config=config,
     )
