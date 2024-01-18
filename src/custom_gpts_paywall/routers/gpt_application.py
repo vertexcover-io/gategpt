@@ -17,7 +17,11 @@ from sqlalchemy import desc, func, or_
 import shortuuid
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from custom_gpts_paywall.config import DEFAULT_VERIFICATION_EXPIRY, EnvConfig
+from custom_gpts_paywall.config import (
+    DEFAULT_VERIFICATION_EXPIRY,
+    EnvConfig,
+    OpenAPISchemaTags,
+)
 from custom_gpts_paywall.dependencies import (
     ConfigDep,
     DbSession,
@@ -135,8 +139,8 @@ def register_custom_gpt_controller(
         auth_details = AuthenticationDetails(
             client_id=str(gpt_application.client_id),
             client_secret=str(gpt_application.client_secret),
-            authorization_url=url_for(request, "oauth2_authorize"),
-            token_url=url_for(request, "oauth2_token"),
+            authorization_url=url_for(request, "oauth2_server_authorize"),
+            token_url=url_for(request, "oauth2_server_token"),
         )
 
         resp = RegisterGPTApplicationResponse(
@@ -149,7 +153,9 @@ def register_custom_gpt_controller(
             uuid=gpt_application.uuid,
             prompt=config.instruction_prompt,
             action_schema_url=url_for(
-                request, "openapi_schema_by_tags", query_params={"tags": "auth"}
+                request,
+                "openapi_schema_by_tags",
+                query_params={"tags": OpenAPISchemaTags.GPTAppSession.value},
             ),
             privacy_policy_url=url_for(request, "privacy_policy"),
             authentication_details=auth_details,
@@ -316,7 +322,7 @@ def register_custom_gpt_api(
     path="/api/v1/custom-gpt-application/{gpt_application_id}",
     response_model=RegisterGPTApplicationResponse,
 )
-def gpt_application_deail(
+def gpt_application_detail(
     request: Request,
     gpt_application_id: str,
     session: DbSession,
@@ -342,15 +348,17 @@ def gpt_application_deail(
     auth_details = AuthenticationDetails(
         client_id=str(gpt_app.client_id),
         client_secret=str(gpt_app.client_secret),
-        authorization_url=url_for(request, "oauth2_authorize"),
-        token_url=url_for(request, "oauth2_token"),
+        authorization_url=url_for(request, "oauth2_server_authorize"),
+        token_url=url_for(request, "oauth2_server_token"),
     )
 
     resp = RegisterGPTApplicationResponse(
         **gpt_app.__dict__,
         prompt=config.instruction_prompt,
         action_schema_url=url_for(
-            request, "openapi_schema_by_tags", query_params={"tags": "auth"}
+            request,
+            "openapi_schema_by_tags",
+            query_params={"tags": OpenAPISchemaTags.GPTAppSession.value},
         ),
         privacy_policy_url=url_for(request, "privacy_policy"),
         authentication_details=auth_details,
