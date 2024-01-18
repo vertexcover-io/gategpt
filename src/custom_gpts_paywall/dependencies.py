@@ -81,6 +81,10 @@ class JWTTokenPayload(BaseModel):
     exp: datetime
     iat: datetime
 
+    @property
+    def email(self) -> EmailStr:
+        return self.sub
+
 
 def parse_user(
     jwt_token: str | None, config: EnvConfig, logger: Logger, session: DbSession
