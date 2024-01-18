@@ -19,7 +19,7 @@ gpt_app_session_router = APIRouter()
 
 class CreateSessionJWTTokenPayload(JWTTokenPayload):
     name: str
-    gpt_application_id: str
+    gpt_application_id: int
 
 
 class CreateSessionResponse(BaseModel):
@@ -93,4 +93,8 @@ def create_session(
     session.add(gpt_session)
     session.commit()
     logger.info(f"New Session Created: {gpt_session}")
-    return gpt_session
+    return CreateSessionResponse(
+        gpt_application_id=gpt_application.uuid,
+        email=gpt_session.email,
+        name=gpt_session.name,
+    )

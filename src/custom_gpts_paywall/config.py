@@ -37,6 +37,7 @@ class OpenAPISchemaTags(Enum):
 
 class EnvConfig(BaseModel):
     debug: bool = Field(default=False)
+    log_level: int = Field(default=logging.INFO)
     db_url: str
     secret_key: str
     port: int = Field(default=8000)
@@ -66,9 +67,15 @@ class EnvConfig(BaseModel):
     def url_scheme(self) -> str:
         return "https" if not self.debug else "http"
 
-    @property
-    def log_level(self) -> int:
-        return logging.DEBUG if self.debug else logging.INFO
+    @validator("log_level", pre=True, always=True)
+    def set_log_level(cls, v: str | None, values: dict[str, Any]) -> int:
+        if v is None:
+            return logging.DEBUG if values.get("debug", False) else logging.INFO
+
+        try:
+            return getattr(logging, v.upper())
+        except AttributeError:
+            raise ValueError(f"Invalid log level {v}")
 
     @validator("enable_sentry", pre=True, always=True)
     def set_enable_sentry(cls, v, values: dict[str, Any]) -> bool:
@@ -143,6 +150,7 @@ def create_config() -> EnvConfig:
         google_oauth_client_secret=os.getenv("GOOGLE_OAUTH_CLIENT_SECRET"),
         enable_sentry=enable_sentry == "1" if enable_sentry is not None else None,
         sentry_dsn=os.getenv("SENTRY_DSN", None),
+        log_level=os.getenv("LOG_LEVEL", None),
         **optional_kwargs,
     )
 
