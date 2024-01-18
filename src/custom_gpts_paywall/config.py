@@ -56,6 +56,8 @@ class EnvConfig(BaseModel):
     aws_access_key_id: Optional[str] = None
     aws_secret_access_key: Optional[str] = None
     sendx_api_key: Optional[str] = None
+    enable_sentry: bool = Field(default=False)
+    sentry_dsn: Optional[str] = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -67,6 +69,20 @@ class EnvConfig(BaseModel):
     @property
     def log_level(self) -> int:
         return logging.DEBUG if self.debug else logging.INFO
+
+    @validator("enable_sentry", pre=True, always=True)
+    def set_enable_sentry(cls, v, values: dict[str, Any]) -> bool:
+        if v:
+            return True
+        elif v is None and values.get("debug", False) is False:
+            return True
+        return False
+
+    @validator("sentry_dsn", always=True)
+    def validate_sentry_dsn(cls, v, values: dict[str, Any]) -> Optional[str]:
+        if values.get("enable_sentry", False) and not v:
+            raise ValueError("Sentry API key is required when Sentry is enabled.")
+        return v
 
     @validator("db_engine", pre=True, always=True)
     def set_db_engine(cls, v, values: dict[str, Any]) -> Engine:
@@ -110,6 +126,8 @@ def create_config() -> EnvConfig:
             "OAUTH_REDIRECT_URI_HOST"
         )
 
+    enable_sentry = os.getenv("ENABLE_SENTRY", None)
+
     return EnvConfig(
         debug=os.getenv("DEBUG", "0") == "1",
         db_url=os.getenv("DATABASE_URL"),
@@ -123,6 +141,8 @@ def create_config() -> EnvConfig:
         domain_url=os.getenv("DOMAIN_NAME"),
         google_oauth_client_id=os.getenv("GOOGLE_OAUTH_CLIENT_ID"),
         google_oauth_client_secret=os.getenv("GOOGLE_OAUTH_CLIENT_SECRET"),
+        enable_sentry=enable_sentry == "1" if enable_sentry is not None else None,
+        sentry_dsn=os.getenv("SENTRY_DSN", None),
         **optional_kwargs,
     )
 

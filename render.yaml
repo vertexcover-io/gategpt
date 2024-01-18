@@ -36,3 +36,6 @@ services:
 
       - key: AWS_SECRET_ACCESS_KEY
         sync: false
+
+      - key: SENTRY_DSN
+        sync: false

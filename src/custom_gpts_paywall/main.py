@@ -1,4 +1,5 @@
 import logging
+import sentry_sdk
 from fastapi import FastAPI, HTTPException, staticfiles
 from starlette.middleware.sessions import SessionMiddleware
 from custom_gpts_paywall.config import (
@@ -28,6 +29,14 @@ def perform_setup(config: EnvConfig):
 
 def create_app() -> FastAPI:
     config = create_config()
+    if config.enable_sentry:
+        sentry_sdk.init(
+            dsn=config.sentry_dsn,
+            traces_sample_rate=1.0,
+            profiles_sample_rate=1.0,
+        )
+        logging.info("Sentry initialized")
+
     app = FastAPI(
         servers=[
             {
