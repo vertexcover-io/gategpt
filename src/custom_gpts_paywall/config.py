@@ -2,6 +2,7 @@ from enum import Enum
 import logging
 import os
 from typing import Any, Callable, Optional
+import jwt
 from pydantic import BaseModel, Field, validator
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, Engine
@@ -11,6 +12,8 @@ from datetime import timedelta
 from authlib.integrations.starlette_client import OAuth
 from authlib.integrations.starlette_client.apps import StarletteOAuth2App
 from fastapi.templating import Jinja2Templates
+
+from custom_gpts_paywall.utils import utcnow
 
 DEFAULT_VERIFICATION_EXPIRY = timedelta(seconds=300)
 DEFAULT_MIN_DELAY_BETWEEN_VERIFICATION = timedelta(seconds=20)
@@ -28,7 +31,7 @@ class OpenAPISchemaTags(Enum):
     Auth = "auth"
     GPTAppRegistration = "gpt_app_registration"
     OAuth2Server = "oauth2_server"
-    UserSession = "user_session"
+    GPTAppSession = "user_session"
     CustomGptApplication = "custom_gpt_application"
 
 
@@ -122,3 +125,22 @@ def create_config() -> EnvConfig:
         google_oauth_client_secret=os.getenv("GOOGLE_OAUTH_CLIENT_SECRET"),
         **optional_kwargs,
     )
+
+
+def create_jwt_token(
+    config: EnvConfig, user_email: str, **custom_claim: dict[str, Any]
+) -> str:
+    expires_in = config.jwt_token_expiry
+    secret_key = config.secret_key.encode("utf-8")
+    payload = {
+        "exp": utcnow() + expires_in,
+        "iat": utcnow(),
+        "sub": user_email,
+        **custom_claim,
+    }
+    return jwt.encode(payload, secret_key, algorithm=JWT_ENCODE_ALGORITHM)
+
+
+def parse_jwt_token(config: EnvConfig, token: str) -> dict[str, Any]:
+    secret_key = config.secret_key.encode("utf-8")
+    return jwt.decode(token, secret_key, algorithms=JWT_ENCODE_ALGORITHM)

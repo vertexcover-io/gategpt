@@ -1,15 +1,17 @@
 from logging import Logger
-from typing import Annotated
+from typing import Annotated, TypedDict
 from urllib.parse import urlencode
 import uuid
+from authlib.integrations.httpx_client import AsyncOAuth2Client
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+import httpx
 from pydantic import BaseModel, HttpUrl, ValidationError, field_validator
 import shortuuid
 from sqlalchemy.orm import Session, joinedload
-from custom_gpts_paywall.config import EnvConfig
+from custom_gpts_paywall.config import EnvConfig, create_jwt_token
 
 from custom_gpts_paywall.dependencies import ConfigDep, DbSession, LoggerDep
 from custom_gpts_paywall.models import (
@@ -37,8 +39,19 @@ class AuthorizationRequestParams(BaseModel):
         return v
 
 
+class OAuth2ServerToken(TypedDict):
+    access_token: str
+    expires_in: int
+    id_token: str
+
+
+class GoogleUserInfo(TypedDict):
+    email: str
+    name: str
+
+
 @oauth2_router.get("/authorize")
-async def oauth2_authorize(
+async def oauth2_server_authorize(
     request: Request,
     config: ConfigDep,
     session: DbSession,
@@ -85,7 +98,7 @@ async def oauth2_authorize(
         request,
         redirect_uri=url_for(
             request,
-            "oauth_google_callback",
+            "oauth2_server_callback_google",
             scheme=config.url_scheme,
         ),
         state=verification_request_id,
@@ -125,7 +138,7 @@ async def _fetch_access_token(
     nonce: str,
     redirect_uri: str,
     config: EnvConfig,
-) -> str:
+) -> OAuth2ServerToken:
     oauth_client = config.google_oauth_client
     token = await oauth_client.fetch_access_token(
         grant_type="authorization_code",
@@ -135,6 +148,15 @@ async def _fetch_access_token(
         redirect_uri=redirect_uri,
     )
     return token
+
+
+async def _fetch_google_user_profile(access_token: str) -> GoogleUserInfo:
+    client = AsyncOAuth2Client(token={"access_token": access_token})
+
+    userinfo_endpoint = "https://www.googleapis.com/oauth2/v3/userinfo"
+
+    response = await client.get(userinfo_endpoint)
+    return await response.json()
 
 
 async def _fetch_user_email(
@@ -151,8 +173,14 @@ async def _fetch_user_email(
         raise Exception("Unable to get user email from google oauth. Please try again")
 
 
+class OAuth2ServerTokenResponse(BaseModel):
+    email: str
+    name: str
+    access_token: str
+
+
 @oauth2_router.post("/token", response_class=JSONResponse)
-async def oauth2_token(
+async def oauth2_server_token(
     request: Request,
     gpt_application: Annotated[CustomGPTApplication, Depends(verify_credentials)],
     session: DbSession,
@@ -204,19 +232,48 @@ async def oauth2_token(
         ),
         config=config,
     )
-    email = await _fetch_user_email(
-        token=token, nonce=oauth_verification_request.nonce, config=config
+    access_token = token["access_token"]
+    try:
+        user_info = await _fetch_google_user_profile(access_token)
+    except (httpx.RequestError, httpx.httpx.NetworkError) as exc:
+        logger.error(
+            f"A network error occurred while fetching user_info: {exc}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=500, detail="Network Error while fetching user_info"
+        )
+    except httpx.HTTPStatusError as exc:
+        error_msg = "Error while validating token"
+        logger.errror(
+            f"Error while fetching user profile: Status Code: {exc.response.status_code}. Response: {exc.response.content}",
+            exc_info=exc,
+        )
+        raise HTTPException(status_code=exc.response.status_code, detail=error_msg)
+
+    email = user_info["email"]
+    name = user_info["name"]
+    jwt_token = create_jwt_token(
+        config,
+        email=email,
+        name=name,
     )
+
     logger.info(
-        f"Successfully fetched user email: {email} and token: {token} from google oauth"
+        f"Successfully fetched user email: {email} and name: {name} from google oauth"
     )
+
     oauth_verification_request.status = OAuthVerificationRequestStatus.VERIFIED
     oauth_verification_request.verified_at = utcnow()
     oauth_verification_request.email = email
     session.add(oauth_verification_request)
     session.commit()
-    token["gpt_application_id"] = gpt_application.uuid
-    return token
+    return {
+        "name": name,
+        "email": email,
+        "gpt_application_id": oauth_verification_request.gpt_application_id,
+        "access_token": jwt_token,
+    }
 
 
 class OAuthCallBackException(Exception):
@@ -304,9 +361,9 @@ def _verify_oauth_verification_request(
 
 
 @oauth2_router.get(
-    "/google/callback",
+    "/callback/google",
 )
-async def oauth_google_callback(
+async def oauth2_server_callback_google(
     request: Request, config: ConfigDep, session: DbSession, logger: LoggerDep
 ):
     code = None
@@ -346,5 +403,4 @@ async def oauth_google_callback(
     )
     session.commit()
     logger.info(f"After Google OAuth Callback redirecting to: {redirect_uri}")
-    print(f"After Google OAuth Callback redirecting to: {redirect_uri}")
     return RedirectResponse(url=redirect_uri)

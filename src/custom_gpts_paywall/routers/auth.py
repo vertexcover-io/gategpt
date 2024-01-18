@@ -4,7 +4,7 @@ from authlib.integrations.base_client import OAuthError
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse, HTMLResponse
-from custom_gpts_paywall.config import JWT_ENCODE_ALGORITHM
+from custom_gpts_paywall.config import create_jwt_token
 from custom_gpts_paywall.dependencies import (
     ConfigDep,
     DbSession,
@@ -12,16 +12,13 @@ from custom_gpts_paywall.dependencies import (
     get_current_user,
 )
 from custom_gpts_paywall.models import User
-from custom_gpts_paywall.utils import url_for, utcnow
+from custom_gpts_paywall.utils import url_for
 
 from fastapi import Depends
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from datetime import timedelta
 from custom_gpts_paywall.config import templates
 
 import shortuuid
-
-import jwt
 
 
 auth_router = APIRouter()
@@ -58,22 +55,12 @@ async def oauth_login(config: ConfigDep, request: Request):
     )
 
 
-def create_jwt_token(user_email: str, secret_key: str, expires_in: timedelta):
-    payload = {"exp": utcnow() + expires_in, "iat": utcnow(), "sub": user_email}
-    return jwt.encode(payload, secret_key, algorithm=JWT_ENCODE_ALGORITHM)
-
-
-@auth_router.get("/p1")
-async def protected_route(current_user: dict = Depends(get_current_user)):
-    return {"message": "You are authorized, welcome!", "user": current_user}
-
-
 @auth_router.get("/api/v1/user/profile", response_model=UserResponseModel)
 async def user_profile(current_user: dict = Depends(get_current_user)):
     return current_user
 
 
-@auth_router.get("/oauth/callback/google", name="oauth_callback_google")
+@auth_router.get("/auth/oauth-callback/google", name="oauth_callback_google")
 async def oauth_callback_google(
     config: ConfigDep, request: Request, session: DbSession, logger: LoggerDep
 ):
@@ -105,10 +92,9 @@ async def oauth_callback_google(
     session.execute(stmt)
     session.commit()
 
-    config_secret_key_bytes = config.secret_key.encode("utf-8")
-
     jwt_token = create_jwt_token(
-        email, config_secret_key_bytes, config.jwt_token_expiry
+        config,
+        email,
     )
     response = RedirectResponse(
         url=url_for(request, "root", scheme=config.url_scheme),
