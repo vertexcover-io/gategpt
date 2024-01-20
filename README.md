@@ -1,5 +1,7 @@
 # GateGPT
 
+[![Demo Video]](demo.mp4)
+
 ## What is GateGPT?
 
 GateGPT is an open source solution designed to enhance the capabilities of CustomGPT applications by providing secure and simplified user authentication. With GateGPT, developers can easily integrate Google OAuth, allowing for a streamlined user login experience and access to insightful analytics.
