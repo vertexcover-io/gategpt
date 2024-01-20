@@ -1,8 +1,24 @@
-# custom-gpts-paywall
+# GateGPT
 
-**custom-gpts-paywall** is an experimental Python service designed to provide various authentication, verification, and paywall functionalities for OpenAI's custom-gpts. Currently, it includes the following implemented actions:
+## What is GateGPT?
 
-- Email Verification
+GateGPT is an open source solution designed to enhance the capabilities of CustomGPT applications by providing secure and simplified user authentication. With GateGPT, developers can easily integrate Google OAuth, allowing for a streamlined user login experience and access to insightful analytics.
+
+## Features
+
+- **Google OAuth Integration**: Secure your application by enabling users to sign in through Google.
+- **Simple Integration**: Integrate GateGPT into your application quickly with minimal setup.
+- **Analytics Dashboard**: Monitor and analyze user activity with a comprehensive dashboard.
+- **Extensible**: Designed with extensibility in mind, allowing for future feature integration and customization.
+
+## Stack
+
+- **Rye**
+- **FastAPI**
+- **PostgreSQL**
+- **Docker**
+- **Render**
+- **Jinja2**
 
 ## Installation
 
@@ -50,9 +66,10 @@ You can run the project both with and without Docker.
    ```bash
    rye run docker-run
    ```
-<hr/>
 
-** Note: You might need to run migrations before able to use this project
+   <hr/>
+
+\*\* Note: You might need to run migrations before able to use this project
 
 ## Migrations
 
@@ -64,7 +81,7 @@ You can run the project both with and without Docker.
   rye run docker-upgrade head
   ```
 
-- To downgrade the database:
+- To downgrade database the:
 
   ```bash
   rye run docker-downgrade base
@@ -129,3 +146,15 @@ You can access the OpenAPI specifications for this project using the following e
 - Swagger UI: [/docs]
 - ReDoc: [/redoc]
 - OpenAPI JSON: [/openapi.json]
+
+## Contributions
+
+We welcome contributions from the community! If you're looking to contribute, please ensure you have pre-commit hooks set up to maintain code quality with proper linting and formatting rules. To get started:
+
+1. Fork the repository.
+2. Set up pre-commit hooks.
+3. Create a new branch for your feature or fix.
+4. Commit your changes with clear, descriptive messages.
+5. Push your branch and open a pull request.
+
+We look forward to your pull requests and are excited to see how you can help improve GateGPT!
