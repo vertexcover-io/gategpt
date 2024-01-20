@@ -1,6 +1,9 @@
 # GateGPT
 
-[![Demo Video]](demo.mp4)
+https://github.com/vertexcover-io/gategpt/assets/3336623/caa03dfc-43e7-42e9-82d5-0d0a36451c8a
+
+
+
 
 ## What is GateGPT?
 
