@@ -14,6 +14,7 @@ GateGPT is an open source solution designed to enhance the capabilities of Custo
 ## Stack
 
 - **Rye**
+- **uvicorn**
 - **FastAPI**
 - **PostgreSQL**
 - **Docker**
@@ -44,6 +45,22 @@ This project utilizes the [Rye package manager](https://github.com/ryelabs/rye) 
    ```
 
 4. Edit the `.env` file and set the required environment variables according to your configuration.
+
+```
+#Required Variables
+- DATABASE_URL
+- DOMAIN_NAME
+- GOOGLE_OAUTH_CLIENT_ID
+- GOOGLE_OAUTH_CLIENT_SECRET
+- SECRET_KEY
+- OAUTH_REDIRECT_URI_HOST - to validate redirect uri. Should be set to `https://chat.openai.com` in production
+
+# Optional Variables
+- DEBUG - set to 1 to enable debug logging and reload
+- LOG_LEVEL - control the log level
+- SENTRY_DSN - to enable SENTRY for error tracking
+
+```
 
 ## How to Run
 

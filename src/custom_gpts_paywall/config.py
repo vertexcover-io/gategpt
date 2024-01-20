@@ -42,7 +42,6 @@ class EnvConfig(BaseModel):
     db_url: str
     secret_key: str
     port: int = Field(default=8000)
-    api_key: str
     min_delay_between_verification: timedelta
     email_from: str
     instruction_prompt: str = Field(default=DEFAULT_INSTRUCTION_PROMPT)
@@ -54,9 +53,6 @@ class EnvConfig(BaseModel):
     session_local: Callable[[], Session] = Field(default=None)
     google_oauth_client: StarletteOAuth2App = Field(default=None)
     oauth_redirect_uri_host: str = Field(default="chat.openai.com")
-    aws_region: Optional[str] = None
-    aws_access_key_id: Optional[str] = None
-    aws_secret_access_key: Optional[str] = None
     sendx_api_key: Optional[str] = None
     enable_sentry: bool = Field(default=False)
     sentry_dsn: Optional[str] = None
@@ -141,7 +137,6 @@ def create_config() -> EnvConfig:
         db_url=os.getenv("DATABASE_URL"),
         secret_key=os.getenv("SECRET_KEY"),
         port=os.getenv("PORT", 8000),
-        api_key=os.getenv("API_KEY"),
         min_delay_between_verification=os.getenv(
             "MIN_DELAY_BETWEEN_VERIFICATION", DEFAULT_MIN_DELAY_BETWEEN_VERIFICATION
         ),
