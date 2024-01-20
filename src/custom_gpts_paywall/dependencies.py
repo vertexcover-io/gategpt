@@ -4,7 +4,7 @@ import logging
 from typing import Annotated
 from fastapi import status
 from fastapi import Cookie, Depends, HTTPException, Request
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import HTTPBearer
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 from custom_gpts_paywall.config import (
@@ -12,8 +12,8 @@ from custom_gpts_paywall.config import (
     create_config,
     parse_jwt_token,
 )
-from custom_gpts_paywall.models import OAuthToken, CustomGPTApplication, User
-from custom_gpts_paywall.utils import url_for, utcnow
+from custom_gpts_paywall.models import User
+from custom_gpts_paywall.utils import url_for
 
 config = create_config()
 
@@ -44,36 +44,6 @@ LoggerDep = Annotated[Logger, Depends(get_logger)]
 
 
 bearer_token_security = HTTPBearer(scheme_name="API Key")
-
-
-def gpt_application_auth(
-    db: DbSession,
-    config: ConfigDep,
-    credentials: Annotated[
-        HTTPAuthorizationCredentials, Depends(bearer_token_security)
-    ],
-) -> CustomGPTApplication:
-    access_token = credentials.credentials
-    print(f"Received access token: {access_token}")
-    gpt_application_auth = (
-        db.query(CustomGPTApplication)
-        .join(OAuthToken)
-        .filter(
-            OAuthToken.access_token == access_token,
-            OAuthToken.expires_at > utcnow(),
-        )
-        .first()
-    )
-    if gpt_application_auth:
-        print("User authenticated via OAuth")
-        return gpt_application_auth
-    elif access_token == config.api_key:
-        print("User authenticated via API key")
-        return None
-    raise HTTPException(status_code=401, detail="Invalid or missing API key")
-
-
-GPTApplicationDep = Annotated[CustomGPTApplication, Depends(gpt_application_auth)]
 
 
 class JWTTokenPayload(BaseModel):
