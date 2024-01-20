@@ -2,7 +2,7 @@ from typing import Any
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import JSONResponse
 
-from custom_gpts_paywall.config import OpenAPISchemaTags
+from gategpt.config import OpenAPISchemaTags
 
 openapi_schema_router = APIRouter()
 

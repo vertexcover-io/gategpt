@@ -17,28 +17,28 @@ from sqlalchemy import desc, func, or_
 import shortuuid
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from custom_gpts_paywall.config import (
+from gategpt.config import (
     DEFAULT_VERIFICATION_EXPIRY,
     EnvConfig,
     OpenAPISchemaTags,
 )
-from custom_gpts_paywall.dependencies import (
+from gategpt.dependencies import (
     ConfigDep,
     DbSession,
     LoggerDep,
     login_required,
 )
 from uuid import UUID, uuid4
-from custom_gpts_paywall.models import (
+from gategpt.models import (
     CustomGPTApplication,
     User,
     VerificationMedium,
     GPTAppSession,
 )
-from custom_gpts_paywall.utils import url_for
-from custom_gpts_paywall.dependencies import get_current_user
+from gategpt.utils import url_for
+from gategpt.dependencies import get_current_user
 from fastapi.responses import HTMLResponse
-from custom_gpts_paywall.config import templates
+from gategpt.config import templates
 
 
 gpt_application_router = APIRouter()

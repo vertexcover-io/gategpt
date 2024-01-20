@@ -13,7 +13,7 @@ from authlib.integrations.starlette_client import OAuth
 from authlib.integrations.starlette_client.apps import StarletteOAuth2App
 from fastapi.templating import Jinja2Templates
 
-from custom_gpts_paywall.utils import utcnow
+from gategpt.utils import utcnow
 
 DEFAULT_VERIFICATION_EXPIRY = timedelta(seconds=300)
 DEFAULT_MIN_DELAY_BETWEEN_VERIFICATION = timedelta(seconds=20)

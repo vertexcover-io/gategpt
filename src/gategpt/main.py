@@ -2,18 +2,18 @@ import logging
 import sentry_sdk
 from fastapi import FastAPI, HTTPException, staticfiles
 from starlette.middleware.sessions import SessionMiddleware
-from custom_gpts_paywall.config import (
+from gategpt.config import (
     EnvConfig,
     OpenAPISchemaTags,
     create_config,
     templates,
 )
-from custom_gpts_paywall.routers.root import root_router
-from custom_gpts_paywall.routers.openapi_schema import openapi_schema_router
-from custom_gpts_paywall.routers.gpt_application import gpt_application_router
-from custom_gpts_paywall.routers.oauth2_server import oauth2_router
-from custom_gpts_paywall.routers.gpt_app_session import gpt_app_session_router
-from custom_gpts_paywall.routers.auth import auth_router
+from gategpt.routers.root import root_router
+from gategpt.routers.openapi_schema import openapi_schema_router
+from gategpt.routers.gpt_application import gpt_application_router
+from gategpt.routers.oauth2_server import oauth2_router
+from gategpt.routers.gpt_app_session import gpt_app_session_router
+from gategpt.routers.auth import auth_router
 
 
 def confugure_logging(config: EnvConfig):

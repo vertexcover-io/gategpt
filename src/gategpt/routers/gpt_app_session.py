@@ -4,14 +4,14 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
-from custom_gpts_paywall.config import EnvConfig, parse_jwt_token
-from custom_gpts_paywall.dependencies import (
+from gategpt.config import EnvConfig, parse_jwt_token
+from gategpt.dependencies import (
     ConfigDep,
     DbSession,
     LoggerDep,
     JWTTokenPayload,
 )
-from custom_gpts_paywall.models import CustomGPTApplication, GPTAppSession
+from gategpt.models import CustomGPTApplication, GPTAppSession
 
 
 gpt_app_session_router = APIRouter()

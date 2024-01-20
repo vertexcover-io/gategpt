@@ -11,15 +11,15 @@ import httpx
 from pydantic import BaseModel, HttpUrl, ValidationError, field_validator
 import shortuuid
 from sqlalchemy.orm import Session, joinedload
-from custom_gpts_paywall.config import EnvConfig, create_jwt_token
+from gategpt.config import EnvConfig, create_jwt_token
 
-from custom_gpts_paywall.dependencies import ConfigDep, DbSession, LoggerDep
-from custom_gpts_paywall.models import (
+from gategpt.dependencies import ConfigDep, DbSession, LoggerDep
+from gategpt.models import (
     OAuthVerificationRequest,
     OAuthVerificationRequestStatus,
     CustomGPTApplication,
 )
-from custom_gpts_paywall.utils import url_for, utcnow
+from gategpt.utils import url_for, utcnow
 
 
 oauth2_router = APIRouter()

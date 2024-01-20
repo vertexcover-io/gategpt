@@ -2,10 +2,10 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import HTMLResponse, FileResponse
 from sqlalchemy import text
 
-from custom_gpts_paywall.dependencies import DbSession, LoggerDep, login_required
+from gategpt.dependencies import DbSession, LoggerDep, login_required
 from fastapi import Request
-from custom_gpts_paywall.models import User
-from custom_gpts_paywall.config import templates
+from gategpt.models import User
+from gategpt.config import templates
 
 root_router = APIRouter()
 

@@ -7,7 +7,7 @@ if __name__ == "__main__":
     debug = os.getenv("DEBUG", "0") == "1"
     port = int(os.getenv("PORT", None) or "8000")
     uvicorn.run(
-        "src.custom_gpts_paywall.main:create_app",
+        "src.gategpt.main:create_app",
         host="0.0.0.0",
         port=port,
         reload=debug,

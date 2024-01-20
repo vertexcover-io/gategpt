@@ -7,13 +7,13 @@ from fastapi import Cookie, Depends, HTTPException, Request
 from fastapi.security import HTTPBearer
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
-from custom_gpts_paywall.config import (
+from gategpt.config import (
     EnvConfig,
     create_config,
     parse_jwt_token,
 )
-from custom_gpts_paywall.models import User
-from custom_gpts_paywall.utils import url_for
+from gategpt.models import User
+from gategpt.utils import url_for
 
 config = create_config()
 

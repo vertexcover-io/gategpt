@@ -18,8 +18,8 @@ from enum import Enum
 import shortuuid
 from uuid import uuid4, UUID
 
-from custom_gpts_paywall.config import DEFAULT_VERIFICATION_EXPIRY
-from custom_gpts_paywall.utils import utcnow
+from gategpt.config import DEFAULT_VERIFICATION_EXPIRY
+from gategpt.utils import utcnow
 
 
 class Base(DeclarativeBase):

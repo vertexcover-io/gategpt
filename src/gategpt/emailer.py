@@ -1,5 +1,5 @@
-from custom_gpts_paywall.config import EnvConfig
-from custom_gpts_paywall.models import CustomGPTApplication
+from gategpt.config import EnvConfig
+from gategpt.models import CustomGPTApplication
 import boto3
 
 VERIFICATION_EMAIL_HTML_TEMPLATE = """

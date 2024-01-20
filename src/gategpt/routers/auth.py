@@ -4,19 +4,19 @@ from authlib.integrations.base_client import OAuthError
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse, HTMLResponse
-from custom_gpts_paywall.config import create_jwt_token
-from custom_gpts_paywall.dependencies import (
+from gategpt.config import create_jwt_token
+from gategpt.dependencies import (
     ConfigDep,
     DbSession,
     LoggerDep,
     get_current_user,
 )
-from custom_gpts_paywall.models import User
-from custom_gpts_paywall.utils import url_for
+from gategpt.models import User
+from gategpt.utils import url_for
 
 from fastapi import Depends
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from custom_gpts_paywall.config import templates
+from gategpt.config import templates
 
 import shortuuid
 

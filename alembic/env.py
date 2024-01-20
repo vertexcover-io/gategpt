@@ -6,7 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 from dotenv import load_dotenv
 import os
-from custom_gpts_paywall.models import Base
+from gategpt.models import Base
 
 
 load_dotenv()

@@ -1,11 +1,11 @@
 from faker import Faker
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from src.custom_gpts_paywall.models import CustomGPTApplication, GPTAppSession, User
+from src.gategpt.models import CustomGPTApplication, GPTAppSession, User
 import random
 from datetime import timedelta
 
-DATABASE_URI = "postgresql://postgres:postgres@postgres:5432/custom_gpts_paywall"
+DATABASE_URI = "postgresql://postgres:postgres@postgres:5432/gategpt"
 engine = create_engine(DATABASE_URI)
 Session = sessionmaker(bind=engine)
 session = Session()
